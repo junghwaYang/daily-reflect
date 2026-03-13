@@ -26,7 +26,7 @@ pub struct AwClient {
 
 /// Execute curl and return the response body as String
 fn curl_get(url: &str, timeout_secs: u64) -> Result<String, String> {
-    let output = Command::new("curl")
+    let output = Command::new("/usr/bin/curl")
         .args([
             "-s",
             "-f",
@@ -83,9 +83,12 @@ impl AwClient {
         start: &str,
         end: &str,
     ) -> Result<Vec<AwEvent>, String> {
+        // URL-encode timestamps: '+' in RFC3339 (e.g. +00:00) must be %2B
+        let enc_start = start.replace('+', "%2B");
+        let enc_end = end.replace('+', "%2B");
         let url = format!(
             "{}/buckets/{}/events?start={}&end={}",
-            self.base_url, bucket_id, start, end
+            self.base_url, bucket_id, enc_start, enc_end
         );
         let body = curl_get(&url, 10)?;
 
