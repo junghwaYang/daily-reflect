@@ -48,11 +48,18 @@ fn http_get(url: &str, timeout_secs: u64) -> Result<String, String> {
         .map_err(|e| format!("HTTP response encoding error: {}", e))
 }
 
-fn validate_aw_api_base(url: &str) -> bool {
-    let normalized = url.trim().to_lowercase();
-    normalized.starts_with("http://localhost")
-        || normalized.starts_with("http://127.0.0.1")
-        || normalized.starts_with("http://[::1]")
+fn validate_aw_api_base(url_str: &str) -> bool {
+    let normalized = url_str.trim();
+    match url::Url::parse(normalized) {
+        Ok(parsed) => {
+            parsed.scheme() == "http"
+                && matches!(
+                    parsed.host_str(),
+                    Some("localhost") | Some("127.0.0.1") | Some("[::1]")
+                )
+        }
+        Err(_) => false,
+    }
 }
 
 fn sanitize_bucket_id(id: &str) -> Result<&str, String> {
@@ -489,6 +496,11 @@ mod tests {
     #[test]
     fn test_validate_aw_api_base_invalid_evil_domain() {
         assert!(!validate_aw_api_base("http://evil.com"));
+    }
+
+    #[test]
+    fn test_validate_aw_api_base_invalid_localhost_subdomain() {
+        assert!(!validate_aw_api_base("http://localhost.evil.com"));
     }
 
     #[test]

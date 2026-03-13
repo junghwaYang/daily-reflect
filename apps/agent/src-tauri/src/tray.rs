@@ -61,7 +61,10 @@ pub fn handle_tray_menu_event(app: &AppHandle, event: &str) {
                 let aw = handle.state::<Arc<AwClient>>();
                 let config = match state.config.lock() {
                     Ok(c) => c.clone(),
-                    Err(_) => return,
+                    Err(e) => {
+                        log::error!("Failed to lock app config in tray handler: {}", e);
+                        return;
+                    }
                 };
                 match crate::do_generate_retrospective(&buffer, &config, &aw).await {
                     Ok(content) => {

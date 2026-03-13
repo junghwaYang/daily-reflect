@@ -8,6 +8,7 @@ pub struct AppConfig {
     // ActivityWatch
     #[serde(default = "default_aw_api_base")]
     pub aw_api_base: String,
+    #[serde(default)]
     pub excluded_apps: Vec<String>,
 
     // AI
@@ -84,7 +85,8 @@ fn default_true() -> bool {
 }
 fn default_local_save_path() -> String {
     dirs::document_dir()
-        .unwrap_or_default()
+        .or_else(|| dirs::home_dir())
+        .unwrap_or_else(|| std::path::PathBuf::from("."))
         .join("DailyReflect")
         .to_string_lossy()
         .to_string()
@@ -143,9 +145,7 @@ impl AppConfig {
                 }
             }
         }
-        let config = Self::default();
-        let _ = config.save();
-        config
+        Self::default()
     }
 
     pub fn save(&self) -> Result<(), String> {

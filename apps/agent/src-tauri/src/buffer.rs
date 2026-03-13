@@ -52,7 +52,7 @@ impl ActivityBuffer {
     pub fn save_retrospective(&self, date: &str, content: &str) -> Result<(), String> {
         let conn = self.conn.lock().map_err(|e| format!("Lock error: {}", e))?;
         conn.execute(
-            "INSERT OR REPLACE INTO retrospectives (date, content, pushed_github, pushed_notion) VALUES (?1, ?2, 0, 0)",
+            "INSERT INTO retrospectives (date, content) VALUES (?1, ?2) ON CONFLICT(date) DO UPDATE SET content=excluded.content",
             params![date, content],
         )
         .map_err(|e| format!("Failed to save retrospective: {}", e))?;
@@ -102,12 +102,9 @@ impl ActivityBuffer {
             })
             .map_err(|e| format!("Failed to query retrospectives: {}", e))?;
 
-        let mut entries = Vec::new();
-        for row in rows {
-            if let Ok(entry) = row {
-                entries.push(entry);
-            }
-        }
+        let entries: Vec<RetroEntry> = rows
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("Failed to decode retrospective row: {}", e))?;
 
         Ok(entries)
     }
@@ -174,6 +171,29 @@ mod tests {
             .expect("get retrospectives");
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].content, "content B");
+    }
+
+    #[test]
+    fn save_retrospective_overwrite_preserves_push_flags() {
+        let buffer = ActivityBuffer::new_in_memory().expect("create in-memory buffer");
+
+        buffer
+            .save_retrospective("2026-03-14", "content A")
+            .expect("save first retrospective");
+        buffer
+            .mark_pushed_github("2026-03-14")
+            .expect("mark github pushed");
+
+        buffer
+            .save_retrospective("2026-03-14", "content B")
+            .expect("replace retrospective");
+
+        let entries = buffer
+            .get_recent_retrospectives(1)
+            .expect("get retrospectives");
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].content, "content B");
+        assert!(entries[0].pushed_github);
     }
 
     #[test]

@@ -260,32 +260,6 @@ body {
   margin-top: 10px;
 }
 
-.activity-list {
-  max-height: 200px;
-  overflow-y: auto;
-  margin-top: 10px;
-}
-
-.activity-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
-  font-size: 12px;
-  border-bottom: 0.5px solid #f0f0f0;
-}
-
-.activity-item .app-name {
-  font-weight: 500;
-  color: #1d1d1f;
-}
-
-.activity-item .time {
-  color: #8e8e93;
-  font-size: 11px;
-  white-space: nowrap;
-  margin-left: 8px;
-}
-
 .activity-summary {
   font-family: -apple-system, BlinkMacSystemFont, "SF Mono", monospace;
   font-size: 11px;
@@ -1121,29 +1095,3 @@ select {
   background: rgba(255, 149, 0, 0.1);
 }
 
-/* ===== Checkbox ===== */
-.checkbox-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.checkbox-label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: #007aff;
-  cursor: pointer;
-}
-
-.checkbox-text {
-  font-weight: 500;
-  color: #1d1d1f;
-}

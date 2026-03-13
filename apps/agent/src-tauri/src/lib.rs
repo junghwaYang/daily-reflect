@@ -7,6 +7,7 @@ mod tracker;
 mod tray;
 
 use buffer::{ActivityBuffer, RetroEntry};
+use chrono::NaiveTime;
 use config::{AppConfig, AppState};
 use serde::Serialize;
 use std::sync::Arc;
@@ -14,10 +15,17 @@ use tauri::{AppHandle, Manager, RunEvent};
 use tracker::AwClient;
 
 fn validate_aw_api_base(url: &str) -> bool {
-    let normalized = url.trim().to_lowercase();
-    normalized.starts_with("http://localhost")
-        || normalized.starts_with("http://127.0.0.1")
-        || normalized.starts_with("http://[::1]")
+    let normalized = url.trim();
+    match url::Url::parse(normalized) {
+        Ok(parsed) => {
+            parsed.scheme() == "http"
+                && matches!(
+                    parsed.host_str(),
+                    Some("localhost") | Some("127.0.0.1") | Some("[::1]")
+                )
+        }
+        Err(_) => false,
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -120,7 +128,11 @@ fn set_config(
         config.retro_language = v;
     }
     if let Some(v) = retro_time {
-        config.retro_time = v;
+        if NaiveTime::parse_from_str(&v, "%H:%M").is_ok() {
+            config.retro_time = v;
+        } else {
+            return Err("retro_time must be in HH:MM format".to_string());
+        }
     }
     if let Some(v) = storage_type {
         config.storage_type = v;
@@ -433,7 +445,9 @@ pub async fn do_generate_retrospective(
     let date = ActivityBuffer::today_date_str();
     let activities = aw.get_daily_summary(&date, &config.excluded_apps, &config.retro_language)?;
 
-    if activities.contains("기록된 활동이 없습니다") {
+    if activities.contains("기록된 활동이 없습니다")
+        || activities.contains("No recorded activity on")
+    {
         return Err("오늘 기록된 활동이 없습니다.".to_string());
     }
 
@@ -660,6 +674,7 @@ mod tests {
     #[test]
     fn validate_aw_api_base_rejects_non_local_urls() {
         assert!(!validate_aw_api_base("http://evil.com"));
+        assert!(!validate_aw_api_base("http://localhost.evil.com"));
         assert!(!validate_aw_api_base("https://attacker.com/http://localhost"));
         assert!(!validate_aw_api_base(""));
     }

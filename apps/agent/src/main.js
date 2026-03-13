@@ -745,9 +745,17 @@ async function connectGitHub() {
 }
 
 async function disconnectGitHub() {
-  await invoke("set_config", { githubToken: "", githubOwner: "", githubRepo: "" });
-  document.getElementById("github-token").value = "";
-  await loadConfig();
+  try {
+    await invoke("set_config", { githubToken: "", githubOwner: "", githubRepo: "" });
+    document.getElementById("github-token").value = "";
+    await loadConfig();
+  } catch (e) {
+    console.error("Failed to disconnect GitHub:", e);
+    const resultEl = document.getElementById("github-test-result");
+    resultEl.textContent = t('github.connect_fail') + e;
+    resultEl.className = "connect-message error";
+    resultEl.classList.remove("hidden");
+  }
 }
 
 async function testGitHub() {
@@ -841,9 +849,17 @@ async function connectNotion() {
 }
 
 async function disconnectNotion() {
-  await invoke("set_config", { notionToken: "", notionDatabaseId: "" });
-  document.getElementById("notion-token").value = "";
-  await loadConfig();
+  try {
+    await invoke("set_config", { notionToken: "", notionDatabaseId: "" });
+    document.getElementById("notion-token").value = "";
+    await loadConfig();
+  } catch (e) {
+    console.error("Failed to disconnect Notion:", e);
+    const resultEl = document.getElementById("notion-test-result");
+    resultEl.textContent = t('notion.connect_fail') + e;
+    resultEl.className = "connect-message error";
+    resultEl.classList.remove("hidden");
+  }
 }
 
 async function testNotion() {
@@ -1329,7 +1345,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // Listen for navigation events from tray
-  _unlistenNavigate = await listen("navigate", (event) => {
-    navigateToTab(event.payload);
-  });
+  try {
+    _unlistenNavigate = await listen("navigate", (event) => {
+      navigateToTab(event.payload);
+    });
+  } catch (e) {
+    console.error("Failed to register navigate listener:", e);
+  }
 });

@@ -30,9 +30,7 @@ pub async fn push_to_github(
     let date = Local::now().format("%Y-%m-%d").to_string();
     let path = format!("{}/{}.md", folder, date);
 
-    let existing_sha = get_file_sha(&client, token, owner, repo, &path)
-        .await
-        .ok();
+    let existing_sha = get_file_sha(&client, token, owner, repo, &path).await?;
 
     let encoded_content = general_purpose::STANDARD.encode(content.as_bytes());
 
@@ -71,7 +69,7 @@ async fn get_file_sha(
     owner: &str,
     repo: &str,
     path: &str,
-) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<Option<String>, Box<dyn std::error::Error + Send + Sync>> {
     let url = format!(
         "https://api.github.com/repos/{}/{}/contents/{}",
         owner, repo, path
@@ -85,10 +83,14 @@ async fn get_file_sha(
         .send()
         .await?;
 
+    if response.status() == reqwest::StatusCode::NOT_FOUND {
+        return Ok(None);
+    }
+
     if !response.status().is_success() {
-        return Err("File not found".into());
+        return Err(format!("GitHub get_file_sha failed with status {}", response.status()).into());
     }
 
     let file_resp = response.json::<GitHubFileResponse>().await?;
-    Ok(file_resp.sha)
+    Ok(Some(file_resp.sha))
 }

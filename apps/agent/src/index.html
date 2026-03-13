@@ -53,7 +53,7 @@
       </button>
 
       <div class="onboarding-check-row">
-        <div class="onboarding-polling-status" id="onboarding-polling-status">
+        <div class="onboarding-polling-status" id="onboarding-polling-status" role="status" aria-live="polite">
           <div class="onboarding-polling-dot" id="onboarding-polling-dot"></div>
           <span data-i18n="onboarding.polling">연결 확인 중...</span>
         </div>
@@ -62,7 +62,7 @@
     </div>
   </div>
 
-  <div class="container">
+  <main class="container">
     <!-- AW Disconnect Banner -->
     <div id="aw-disconnect-banner" class="aw-disconnect-banner hidden">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -228,7 +228,7 @@
                 <input type="password" id="github-token" placeholder="ghp_..." />
                 <button id="github-connect-btn" class="btn btn-sm btn-primary" data-i18n="github.connect">연결</button>
               </div>
-              <div id="github-connect-error" class="connect-message error hidden"></div>
+              <div id="github-connect-error" class="connect-message error hidden" role="alert" aria-live="assertive"></div>
             </div>
             <div id="github-connected" class="service-connected hidden">
               <div class="form-group">
@@ -272,7 +272,7 @@
                 <input type="password" id="notion-token" placeholder="secret_..." />
                 <button id="notion-connect-btn" class="btn btn-sm btn-primary" data-i18n="notion.connect">연결</button>
               </div>
-              <div id="notion-connect-error" class="connect-message error hidden"></div>
+              <div id="notion-connect-error" class="connect-message error hidden" role="alert" aria-live="assertive"></div>
             </div>
             <div id="notion-connected" class="service-connected hidden">
               <div class="form-group">
@@ -304,7 +304,7 @@
                 <div class="aw-status-label" data-i18n="data.aw_label">ActivityWatch</div>
                 <p class="text-muted path-hint" data-i18n="data.aw_desc">활동 추적은 ActivityWatch가 담당합니다.<br/>ActivityWatch가 실행 중이어야 데이터를 가져올 수 있습니다.</p>
               </div>
-              <span class="connection-badge" id="aw-connection-badge" data-i18n="badge.checking">확인 중</span>
+              <span class="connection-badge" id="aw-connection-badge" data-i18n="badge.checking" role="status" aria-live="polite">확인 중</span>
             </div>
             <button id="check-aw-btn" class="btn btn-sm" style="margin-top:8px;" data-i18n="data.check_btn">연결 확인</button>
           </section>
@@ -337,7 +337,7 @@
             <p class="empty-state-sub" data-i18n="retro.empty_sub">아래 버튼을 눌러 오늘의 회고를 시작하세요</p>
           </div>
         </div>
-        <div id="generate-status" class="generate-status hidden"></div>
+        <div id="generate-status" class="generate-status hidden" role="status" aria-live="polite"></div>
         <button id="generate-now-btn" class="generate-btn">
           <span class="generate-btn-text" data-i18n="retro.generate_btn">수동으로 회고 생성하기</span>
         </button>
@@ -351,7 +351,7 @@
         <div id="retro-preview-content" class="retro-preview-content"></div>
       </div>
     </div>
-  </div>
+  </main>
 
   <!-- Bottom Tab Bar -->
   <nav class="tab-bar">

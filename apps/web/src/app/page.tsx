@@ -102,7 +102,7 @@ export default function Home() {
 
   const GITHUB_URL = "https://github.com/junghwaYang/daily-reflect";
   const RELEASES_URL = `${GITHUB_URL}/releases`;
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "/daily-reflect";
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
