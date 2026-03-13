@@ -168,15 +168,17 @@ fn get_config(state: tauri::State<'_, AppState>) -> Result<AppConfig, String> {
 fn get_today_activities(
     state: tauri::State<'_, AppState>,
     aw: tauri::State<'_, Arc<AwClient>>,
+    language: Option<String>,
 ) -> Result<String, String> {
-    let (date, excluded) = {
+    let (date, excluded, lang) = {
         let config = state.config.lock().map_err(|e| e.to_string())?;
         (
             ActivityBuffer::today_date_str(),
             config.excluded_apps.clone(),
+            language.unwrap_or_else(|| config.retro_language.clone()),
         )
     };
-    aw.get_daily_summary(&date, &excluded)
+    aw.get_daily_summary(&date, &excluded, &lang)
 }
 
 #[tauri::command]
@@ -404,7 +406,7 @@ pub async fn do_generate_retrospective(
     }
 
     let date = ActivityBuffer::today_date_str();
-    let activities = aw.get_daily_summary(&date, &config.excluded_apps)?;
+    let activities = aw.get_daily_summary(&date, &config.excluded_apps, &config.retro_language)?;
 
     if activities.contains("기록된 활동이 없습니다") {
         return Err("오늘 기록된 활동이 없습니다.".to_string());

@@ -1098,7 +1098,7 @@ async function removeExcludedApp(appName) {
 // --- Activities ---
 async function loadTodayActivities() {
   try {
-    const summary = await invoke("get_today_activities");
+    const summary = await invoke("get_today_activities", { language: currentLang });
     const container = document.getElementById("today-activities");
     container.innerHTML = `<pre class="activity-summary">${escapeHtml(summary)}</pre>`;
   } catch (e) {

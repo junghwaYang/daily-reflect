@@ -194,9 +194,16 @@ impl AwClient {
         &self,
         date: &str,
         excluded_apps: &[String],
+        lang: &str,
     ) -> Result<String, String> {
+        let is_en = lang == "en";
+
         if !self.is_connected() {
-            return Err("ActivityWatch가 실행 중이 아닙니다. ActivityWatch를 먼저 실행해주세요.".to_string());
+            return Err(if is_en {
+                "ActivityWatch is not running. Please start ActivityWatch first.".to_string()
+            } else {
+                "ActivityWatch가 실행 중이 아닙니다. ActivityWatch를 먼저 실행해주세요.".to_string()
+            });
         }
 
         let (start, end) = Self::date_range(date)?;
@@ -247,7 +254,11 @@ impl AwClient {
             .collect();
 
         if events.is_empty() {
-            return Ok(format!("{}에 기록된 활동이 없습니다.", date));
+            return Ok(if is_en {
+                format!("No recorded activity on {}.", date)
+            } else {
+                format!("{}에 기록된 활동이 없습니다.", date)
+            });
         }
 
         // Aggregate per-app duration and window titles
@@ -310,33 +321,45 @@ impl AwClient {
         let idle_mins = ((afk_idle_secs as u64) % 3600) / 60;
 
         // Build summary text
-        let mut summary = format!("날짜: {}\n", date);
+        let (lbl_date, lbl_active, lbl_idle, lbl_events, lbl_apps, lbl_hourly, lbl_log) = if is_en {
+            ("Date", "Total Active Time", "Idle Time", "Events", "## App Usage & Details", "## Hourly Activity", "## Activity Log")
+        } else {
+            ("날짜", "총 활동 시간", "유휴 시간", "이벤트 수", "## 앱별 사용 시간 및 상세 활동", "## 시간대별 활동", "## 상세 활동 로그")
+        };
+        let (h_unit, m_unit, s_unit) = if is_en {
+            ("h", "m", "s")
+        } else {
+            ("시간", "분", "초")
+        };
+        let hour_suffix = if is_en { "" } else { "시" };
+
+        let mut summary = format!("{}: {}\n", lbl_date, date);
         summary.push_str(&format!(
-            "총 활동 시간: {}시간 {}분\n",
-            active_hours, active_mins
+            "{}: {}{} {}{}\n",
+            lbl_active, active_hours, h_unit, active_mins, m_unit
         ));
         summary.push_str(&format!(
-            "유휴 시간: {}시간 {}분\n",
-            idle_hours, idle_mins
+            "{}: {}{} {}{}\n",
+            lbl_idle, idle_hours, h_unit, idle_mins, m_unit
         ));
-        summary.push_str(&format!("이벤트 수: {}\n\n", events.len()));
+        summary.push_str(&format!("{}: {}\n\n", lbl_events, events.len()));
 
         // App usage sorted by duration
         let mut app_list: Vec<_> = app_duration.into_iter().collect();
         app_list.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
 
-        summary.push_str("## 앱별 사용 시간 및 상세 활동\n");
+        summary.push_str(&format!("{}\n", lbl_apps));
         for (app, secs) in &app_list {
             let s = *secs as u64;
             let h = s / 3600;
             let m = (s % 3600) / 60;
             let r = s % 60;
             if h > 0 {
-                summary.push_str(&format!("- {}: {}시간 {}분 {}초\n", app, h, m, r));
+                summary.push_str(&format!("- {}: {}{} {}{} {}{}\n", app, h, h_unit, m, m_unit, r, s_unit));
             } else if m > 0 {
-                summary.push_str(&format!("- {}: {}분 {}초\n", app, m, r));
+                summary.push_str(&format!("- {}: {}{} {}{}\n", app, m, m_unit, r, s_unit));
             } else {
-                summary.push_str(&format!("- {}: {}초\n", app, r));
+                summary.push_str(&format!("- {}: {}{}\n", app, r, s_unit));
             }
 
             // Window title details (top 10)
@@ -347,25 +370,25 @@ impl AwClient {
                     let tm = (*t_secs as u64) / 60;
                     let tr = (*t_secs as u64) % 60;
                     if tm > 0 {
-                        summary.push_str(&format!("  · {} ({}분 {}초)\n", title, tm, tr));
+                        summary.push_str(&format!("  · {} ({}{} {}{})\n", title, tm, m_unit, tr, s_unit));
                     } else {
-                        summary.push_str(&format!("  · {} ({}초)\n", title, tr));
+                        summary.push_str(&format!("  · {} ({}{})\n", title, tr, s_unit));
                     }
                 }
             }
         }
 
         // Hourly breakdown
-        summary.push_str("\n## 시간대별 활동\n");
+        summary.push_str(&format!("\n{}\n", lbl_hourly));
         let mut hours: Vec<_> = hourly.into_iter().collect();
         hours.sort_by_key(|(h, _)| *h);
         for (hour, entries) in &hours {
             let labels: Vec<&str> = entries.iter().map(|(_, l)| l.as_str()).collect();
-            summary.push_str(&format!("- {:02}시: {}\n", hour, labels.join(", ")));
+            summary.push_str(&format!("- {:02}{}: {}\n", hour, hour_suffix, labels.join(", ")));
         }
 
         // Raw activity log [App] Title (like ActivityWatch format)
-        summary.push_str("\n## 상세 활동 로그\n");
+        summary.push_str(&format!("\n{}\n", lbl_log));
         let mut seen: HashSet<String> = HashSet::new();
         for event in &events {
             let app = event
