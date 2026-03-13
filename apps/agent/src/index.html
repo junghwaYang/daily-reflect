@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Reflect</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Daily Reflect</h1>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="status">상태</button>
+      <button class="tab" data-tab="settings">설정</button>
+      <button class="tab" data-tab="retros">회고글</button>
+    </nav>
+
+    <!-- Status Tab -->
+    <div id="tab-status" class="tab-content active">
+      <!-- 히어로 영역: AW 연결 상태 -->
+      <div class="hero-card">
+        <div class="hero-status">
+          <div class="hero-status-dot" id="tracking-dot"></div>
+          <span class="hero-status-text" id="tracking-text">확인 중...</span>
+        </div>
+        <span class="hero-sub" id="aw-sub">ActivityWatch 연결 확인 중</span>
+      </div>
+
+      <!-- 오늘의 숫자 -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-value" id="today-active-time">0분</span>
+          <span class="metric-label">활동 시간</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value" id="today-idle-time">0분</span>
+          <span class="metric-label">유휴 시간</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value" id="today-count">0</span>
+          <span class="metric-label">이벤트</span>
+        </div>
+      </div>
+
+      <!-- 오늘 활동 요약 -->
+      <section class="card">
+        <div class="section-header" id="activity-toggle">
+          <h2>오늘 활동</h2>
+          <span class="section-chevron" id="activity-chevron">&#x2303;</span>
+        </div>
+        <div id="today-activities" class="activity-preview">
+          <p class="text-muted">로딩 중...</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="tab-settings" class="tab-content">
+
+      <!-- 1단계: 요약 카드 리스트 -->
+      <div id="settings-main">
+        <div class="settings-card" data-detail="ai">
+          <div class="settings-card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+          <div class="settings-card-body">
+            <div class="settings-card-title">AI 글쓰기</div>
+            <div class="settings-card-desc" id="ai-summary">일기체 · 한국어 · 23:50</div>
+          </div>
+          <div class="settings-card-arrow">&#x203A;</div>
+        </div>
+
+        <div class="settings-card" data-detail="storage">
+          <div class="settings-card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></div>
+          <div class="settings-card-body">
+            <div class="settings-card-title">저장 위치</div>
+            <div class="settings-card-desc" id="storage-summary">로컬</div>
+          </div>
+          <div class="settings-card-arrow">&#x203A;</div>
+        </div>
+
+        <div class="settings-card" data-detail="data">
+          <div class="settings-card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF9500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <div class="settings-card-body">
+            <div class="settings-card-title">데이터 소스</div>
+            <div class="settings-card-desc" id="data-summary">ActivityWatch · 제외 앱 0개</div>
+          </div>
+          <div class="settings-card-arrow">&#x203A;</div>
+        </div>
+      </div>
+
+      <!-- 2단계: AI 글쓰기 상세 -->
+      <div id="settings-detail-ai" class="settings-detail">
+        <div class="detail-header">
+          <button class="detail-back-btn" data-back>&#x2190; 뒤로</button>
+          <h2>AI 글쓰기</h2>
+        </div>
+        <section class="card">
+          <div class="form-group">
+            <label for="gemini-api-key">AI 연결 키</label>
+            <input type="password" id="gemini-api-key" placeholder="AIza..." />
+          </div>
+          <div class="form-group">
+            <label for="retro-tone">글쓰기 톤</label>
+            <select id="retro-tone">
+              <option value="diary">일기체</option>
+              <option value="blog">블로그</option>
+              <option value="bullet">불렛 포인트</option>
+              <option value="custom">직접 입력</option>
+            </select>
+          </div>
+          <div class="form-group" id="custom-tone-group" style="display:none;">
+            <label for="custom-tone">커스텀 톤 설명</label>
+            <input type="text" id="custom-tone" placeholder="예: 친구에게 말하듯 유머러스하게" />
+            <p class="text-muted path-hint">AI에게 전달할 글쓰기 스타일을 자유롭게 입력하세요</p>
+          </div>
+          <div class="form-group">
+            <label for="retro-language">언어</label>
+            <select id="retro-language">
+              <option value="ko">한국어</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="retro-time">생성 시각</label>
+            <input type="time" id="retro-time" value="23:50" />
+          </div>
+        </section>
+      </div>
+
+      <!-- 2단계: 저장 위치 상세 -->
+      <div id="settings-detail-storage" class="settings-detail">
+        <div class="detail-header">
+          <button class="detail-back-btn" data-back>&#x2190; 뒤로</button>
+          <h2>저장 위치</h2>
+        </div>
+
+        <!-- 로컬 저장 -->
+        <section class="card">
+          <div class="storage-service-header">
+            <span class="storage-service-title">로컬 저장</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="save-local" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div id="local-detail" class="storage-service-body">
+            <div class="form-group">
+              <label>저장 경로</label>
+              <div class="path-picker">
+                <input type="text" id="local-save-path" readonly />
+                <button id="pick-folder-btn" class="btn btn-sm">폴더 선택</button>
+              </div>
+              <p class="text-muted path-hint" id="local-path-hint">회고글이 해당 경로에 마크다운 파일로 저장됩니다</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- GitHub -->
+        <section class="card" id="github-settings">
+          <div class="storage-service-header">
+            <span class="storage-service-title">GitHub</span>
+            <div class="storage-service-right">
+              <span id="github-status-badge" class="connection-badge"></span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="save-github" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div id="github-setup" class="service-setup">
+            <div class="setup-steps">
+              <p class="step-desc">1. GitHub에서 토큰을 생성하세요</p>
+              <button id="open-github-token-btn" class="btn btn-sm btn-outline">GitHub에서 토큰 생성</button>
+              <p class="step-desc">2. 생성된 토큰을 아래에 붙여넣기</p>
+            </div>
+            <div class="form-row">
+              <input type="password" id="github-token" placeholder="ghp_..." />
+              <button id="github-connect-btn" class="btn btn-sm btn-primary">연결</button>
+            </div>
+            <div id="github-connect-error" class="connect-message error hidden"></div>
+          </div>
+          <div id="github-connected" class="service-connected hidden">
+            <div class="form-group">
+              <label>레포지토리</label>
+              <select id="github-repo-select">
+                <option value="">레포 선택...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>저장 폴더</label>
+              <input type="text" id="github-folder" placeholder="retrospectives" />
+              <p class="text-muted path-hint" id="github-path-hint"></p>
+            </div>
+            <div class="service-actions">
+              <button id="github-test-btn" class="btn btn-sm">연결 테스트</button>
+              <button id="github-disconnect-btn" class="btn btn-sm btn-danger">연결 해제</button>
+            </div>
+            <div id="github-test-result" class="connect-message hidden"></div>
+          </div>
+        </section>
+
+        <!-- Notion -->
+        <section class="card" id="notion-settings">
+          <div class="storage-service-header">
+            <span class="storage-service-title">Notion</span>
+            <div class="storage-service-right">
+              <span id="notion-status-badge" class="connection-badge"></span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="save-notion" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div id="notion-setup" class="service-setup">
+            <div class="setup-steps">
+              <p class="step-desc">1. Notion에서 통합을 생성하세요</p>
+              <button id="open-notion-integration-btn" class="btn btn-sm btn-outline">Notion에서 통합 생성</button>
+              <p class="step-desc">2. 통합 토큰을 아래에 붙여넣기</p>
+              <p class="step-desc">3. Notion에서 사용할 데이터베이스에 통합을 연결해주세요</p>
+            </div>
+            <div class="form-row">
+              <input type="password" id="notion-token" placeholder="secret_..." />
+              <button id="notion-connect-btn" class="btn btn-sm btn-primary">연결</button>
+            </div>
+            <div id="notion-connect-error" class="connect-message error hidden"></div>
+          </div>
+          <div id="notion-connected" class="service-connected hidden">
+            <div class="form-group">
+              <label>데이터베이스</label>
+              <select id="notion-db-select">
+                <option value="">데이터베이스 선택...</option>
+              </select>
+              <p class="text-muted path-hint">선택한 데이터베이스에 매일 새 페이지가 생성됩니다</p>
+            </div>
+            <div class="service-actions">
+              <button id="notion-test-btn" class="btn btn-sm">연결 테스트</button>
+              <button id="notion-disconnect-btn" class="btn btn-sm btn-danger">연결 해제</button>
+            </div>
+            <div id="notion-test-result" class="connect-message hidden"></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- 2단계: 데이터 소스 상세 -->
+      <div id="settings-detail-data" class="settings-detail">
+        <div class="detail-header">
+          <button class="detail-back-btn" data-back>&#x2190; 뒤로</button>
+          <h2>데이터 소스</h2>
+        </div>
+        <section class="card">
+          <div class="aw-status-row">
+            <div>
+              <div class="aw-status-label">ActivityWatch</div>
+              <p class="text-muted path-hint">활동 추적은 ActivityWatch가 담당합니다.<br/>ActivityWatch가 실행 중이어야 데이터를 가져올 수 있습니다.</p>
+            </div>
+            <span class="connection-badge" id="aw-connection-badge">확인 중</span>
+          </div>
+          <button id="check-aw-btn" class="btn btn-sm" style="margin-top:8px;">연결 확인</button>
+        </section>
+        <section class="card">
+          <h2>제외 앱</h2>
+          <p class="text-muted">이 목록의 앱은 회고글에서 제외됩니다</p>
+          <div class="excluded-list" id="excluded-list"></div>
+          <div class="form-row">
+            <input type="text" id="new-excluded-app" placeholder="앱 이름" />
+            <button id="add-excluded-btn" class="btn btn-sm">추가</button>
+          </div>
+        </section>
+      </div>
+
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast hidden">저장됨</div>
+
+    <!-- Retrospectives Tab -->
+    <div id="tab-retros" class="tab-content">
+      <div id="retro-main">
+        <button id="generate-now-btn" class="generate-btn">
+          <span class="generate-btn-icon">&#x2728;</span>
+          <span class="generate-btn-text">오늘의 회고 생성하기</span>
+        </button>
+        <div id="generate-status" class="generate-status hidden"></div>
+        <div class="retro-section-title" id="retro-list-title" style="display:none;">
+          <span>지난 회고</span>
+        </div>
+        <div id="retro-list" class="retro-list">
+          <div class="empty-state">
+            <span class="empty-state-icon">&#x1F4DD;</span>
+            <p class="empty-state-text">아직 생성된 회고글이 없습니다</p>
+            <p class="empty-state-sub">위 버튼을 눌러 오늘의 회고를 시작하세요</p>
+          </div>
+        </div>
+      </div>
+      <div id="retro-detail" class="retro-detail">
+        <div class="detail-header">
+          <button class="detail-back-btn" id="retro-back-btn">&#x2190; 뒤로</button>
+          <h2 id="retro-preview-title">회고글</h2>
+        </div>
+        <div id="retro-preview-content" class="retro-preview-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
