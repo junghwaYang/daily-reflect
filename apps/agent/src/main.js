@@ -2,6 +2,349 @@ const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
 
 let currentConfig = null;
+let currentLang = 'ko';
+
+// --- i18n ---
+const i18n = {
+  ko: {
+    // Status tab
+    'tracking.checking': '확인 중...',
+    'tracking.aw_checking': 'ActivityWatch 연결 확인 중',
+    'tracking.connected': 'ActivityWatch 연결됨',
+    'tracking.fetching': '활동 데이터를 가져오고 있습니다',
+    'tracking.disconnected': 'ActivityWatch 미연결',
+    'tracking.please_run': 'ActivityWatch를 실행해주세요',
+    'tracking.failed': 'AW 연결 실패',
+    'metric.active_time': '활동 시간',
+    'metric.idle_time': '유휴 시간',
+    'metric.events': '이벤트',
+    'activity.title': '오늘 활동',
+    'activity.loading': '로딩 중...',
+    'activity.no_data': 'ActivityWatch에서 데이터를 가져올 수 없습니다.',
+    'time.hours_mins': '{h}시간 {m}분',
+    'time.mins': '{m}분',
+
+    // Tab bar
+    'tab.status': '상태',
+    'tab.retros': '회고',
+    'tab.settings': '설정',
+
+    // Banner
+    'banner.aw_not_running': 'ActivityWatch가 실행 중이지 않습니다.',
+    'banner.view_settings': '설정 보기',
+
+    // Onboarding
+    'onboarding.title': 'ActivityWatch가 필요해요',
+    'onboarding.desc': 'Daily Reflect는 ActivityWatch를 통해 하루 활동을 추적합니다. ActivityWatch는 완전히 로컬에서 실행되는 오픈소스 활동 트래커입니다.',
+    'onboarding.step1_title': 'ActivityWatch 다운로드',
+    'onboarding.step1_desc': '아래 버튼으로 설치 파일을 받으세요',
+    'onboarding.step2_title': '설치 및 실행',
+    'onboarding.step2_desc': '다운로드한 파일을 열고 설치를 완료하세요',
+    'onboarding.step3_title': 'ActivityWatch 시작',
+    'onboarding.step3_desc': '앱을 실행하면 메뉴바에 아이콘이 나타납니다',
+    'onboarding.step4_title': '여기로 돌아오세요',
+    'onboarding.step4_desc': '연결이 감지되면 자동으로 시작됩니다',
+    'onboarding.download_mac': 'macOS용 ActivityWatch 다운로드',
+    'onboarding.download_windows': 'Windows용 ActivityWatch 다운로드',
+    'onboarding.download_linux': 'Linux용 ActivityWatch 다운로드',
+    'onboarding.polling': '연결 확인 중...',
+    'onboarding.check_btn': '연결 확인',
+    'onboarding.checking_btn': '확인 중...',
+    'onboarding.aw_connected': 'ActivityWatch 연결됨!',
+    'onboarding.not_connected': '아직 연결되지 않았습니다',
+
+    // Settings main
+    'settings.ai_writing': 'AI 글쓰기',
+    'settings.storage': '저장 위치',
+    'settings.data_source': '데이터 소스',
+    'settings.back': '설정',
+
+    // AI Writing detail
+    'ai.api_key_label': 'AI 연결 키',
+    'ai.tone_label': '글쓰기 톤',
+    'ai.tone_diary': '일기체',
+    'ai.tone_blog': '블로그',
+    'ai.tone_bullet': '불렛 포인트',
+    'ai.tone_custom': '직접 입력',
+    'ai.custom_tone_label': '커스텀 톤 설명',
+    'ai.custom_tone_placeholder': '예: 친구에게 말하듯 유머러스하게',
+    'ai.custom_tone_hint': 'AI에게 전달할 글쓰기 스타일을 자유롭게 입력하세요',
+    'ai.language_label': '언어',
+    'ai.lang_ko': '한국어',
+    'ai.lang_en': 'English',
+    'ai.time_label': '생성 시각',
+
+    // Storage detail
+    'storage.local_title': '로컬 저장',
+    'storage.path_label': '저장 경로',
+    'storage.pick_folder': '폴더 선택',
+    'storage.path_hint': '회고글이 해당 경로에 마크다운 파일로 저장됩니다',
+    'storage.local_summary': '로컬',
+    'storage.none': '없음',
+
+    // GitHub
+    'github.step1': '1. GitHub에서 토큰을 생성하세요',
+    'github.open_token': 'GitHub에서 토큰 생성',
+    'github.step2': '2. 생성된 토큰을 아래에 붙여넣기',
+    'github.connect': '연결',
+    'github.connecting': '연결 중...',
+    'github.connect_fail': '연결 실패: ',
+    'github.repo_label': '레포지토리',
+    'github.repo_select': '레포 선택...',
+    'github.repo_loading': '로딩 중...',
+    'github.repo_load_fail': '레포 목록 불러오기 실패',
+    'github.folder_label': '저장 폴더',
+    'github.test_btn': '연결 테스트',
+    'github.disconnect_btn': '연결 해제',
+    'github.select_repo': '레포를 선택해주세요',
+    'github.testing': '테스트 중...',
+    'github.path_hint': '{repo}/{folder}/{date}.md 형태로 커밋됩니다',
+
+    // Notion
+    'notion.step1': '1. Notion에서 통합을 생성하세요',
+    'notion.open_integration': 'Notion에서 통합 생성',
+    'notion.step2': '2. 통합 토큰을 아래에 붙여넣기',
+    'notion.step3': '3. Notion에서 사용할 데이터베이스에 통합을 연결해주세요',
+    'notion.connect': '연결',
+    'notion.connecting': '연결 중...',
+    'notion.connect_fail': '연결 실패: ',
+    'notion.db_label': '데이터베이스',
+    'notion.db_select': '데이터베이스 선택...',
+    'notion.db_loading': '로딩 중...',
+    'notion.db_load_fail': '데이터베이스 불러오기 실패',
+    'notion.db_hint': '선택한 데이터베이스에 매일 새 페이지가 생성됩니다',
+    'notion.test_btn': '연결 테스트',
+    'notion.disconnect_btn': '연결 해제',
+    'notion.select_db': '데이터베이스를 선택해주세요',
+    'notion.testing': '테스트 중...',
+
+    // Data source detail
+    'data.aw_label': 'ActivityWatch',
+    'data.aw_desc': '활동 추적은 ActivityWatch가 담당합니다.\nActivityWatch가 실행 중이어야 데이터를 가져올 수 있습니다.',
+    'data.check_btn': '연결 확인',
+    'data.excluded_title': '제외 앱',
+    'data.excluded_desc': '이 목록의 앱은 회고글에서 제외됩니다',
+    'data.excluded_none': '제외된 앱 없음',
+    'data.excluded_placeholder': '앱 이름',
+    'data.add_btn': '추가',
+    'data.summary': 'ActivityWatch · 제외 앱 {count}개',
+
+    // Connection badges
+    'badge.connected': '연결됨',
+    'badge.disconnected': '미연결',
+    'badge.checking': '확인 중',
+    'badge.error': '오류',
+
+    // Retro tab
+    'retro.empty_text': '아직 생성된 회고글이 없습니다',
+    'retro.empty_sub': '아래 버튼을 눌러 오늘의 회고를 시작하세요',
+    'retro.empty_sub_list': '위 버튼을 눌러 오늘의 회고를 시작하세요',
+    'retro.generate_btn': '수동으로 회고 생성하기',
+    'retro.generating': '생성 중...',
+    'retro.generating_msg': 'AI 회고글을 생성하고 있습니다...',
+    'retro.generated_ok': '회고글이 성공적으로 생성되었습니다!',
+    'retro.generated_fail': '생성 실패: ',
+    'retro.generate_retry': '오늘의 회고 생성하기',
+    'retro.past_title': '지난 회고',
+    'retro.back': '회고 목록',
+    'retro.title_suffix': ' 회고',
+
+    // AI summary (settings card)
+    'summary.tone_diary': '일기체',
+    'summary.tone_blog': '블로그',
+    'summary.tone_bullet': '불렛',
+    'summary.tone_custom': '커스텀',
+    'summary.lang_ko': '한국어',
+    'summary.lang_en': 'English',
+
+    // Local path hint
+    'storage.path_format': '{path}/{year}/{date}.md 형태로 저장됩니다',
+
+    // Toast
+    'toast.saved': '저장됨',
+  },
+  en: {
+    // Status tab
+    'tracking.checking': 'Checking...',
+    'tracking.aw_checking': 'Checking ActivityWatch connection',
+    'tracking.connected': 'ActivityWatch Connected',
+    'tracking.fetching': 'Fetching activity data',
+    'tracking.disconnected': 'ActivityWatch Not Connected',
+    'tracking.please_run': 'Please start ActivityWatch',
+    'tracking.failed': 'AW Connection Failed',
+    'metric.active_time': 'Active Time',
+    'metric.idle_time': 'Idle Time',
+    'metric.events': 'Events',
+    'activity.title': "Today's Activity",
+    'activity.loading': 'Loading...',
+    'activity.no_data': 'Could not fetch data from ActivityWatch.',
+    'time.hours_mins': '{h}h {m}m',
+    'time.mins': '{m}m',
+
+    // Tab bar
+    'tab.status': 'Status',
+    'tab.retros': 'Retros',
+    'tab.settings': 'Settings',
+
+    // Banner
+    'banner.aw_not_running': 'ActivityWatch is not running.',
+    'banner.view_settings': 'View Settings',
+
+    // Onboarding
+    'onboarding.title': 'ActivityWatch Required',
+    'onboarding.desc': 'Daily Reflect tracks your daily activity through ActivityWatch. ActivityWatch is an open-source activity tracker that runs entirely locally.',
+    'onboarding.step1_title': 'Download ActivityWatch',
+    'onboarding.step1_desc': 'Download the installer using the button below',
+    'onboarding.step2_title': 'Install & Launch',
+    'onboarding.step2_desc': 'Open the downloaded file and complete installation',
+    'onboarding.step3_title': 'Start ActivityWatch',
+    'onboarding.step3_desc': 'An icon will appear in the menu bar when the app is running',
+    'onboarding.step4_title': 'Come Back Here',
+    'onboarding.step4_desc': 'The app will start automatically when a connection is detected',
+    'onboarding.download_mac': 'Download ActivityWatch for macOS',
+    'onboarding.download_windows': 'Download ActivityWatch for Windows',
+    'onboarding.download_linux': 'Download ActivityWatch for Linux',
+    'onboarding.polling': 'Checking connection...',
+    'onboarding.check_btn': 'Check Connection',
+    'onboarding.checking_btn': 'Checking...',
+    'onboarding.aw_connected': 'ActivityWatch Connected!',
+    'onboarding.not_connected': 'Not connected yet',
+
+    // Settings main
+    'settings.ai_writing': 'AI Writing',
+    'settings.storage': 'Storage Location',
+    'settings.data_source': 'Data Source',
+    'settings.back': 'Settings',
+
+    // AI Writing detail
+    'ai.api_key_label': 'AI API Key',
+    'ai.tone_label': 'Writing Tone',
+    'ai.tone_diary': 'Diary',
+    'ai.tone_blog': 'Blog',
+    'ai.tone_bullet': 'Bullet Points',
+    'ai.tone_custom': 'Custom',
+    'ai.custom_tone_label': 'Custom Tone Description',
+    'ai.custom_tone_placeholder': 'e.g. Humorous, like talking to a friend',
+    'ai.custom_tone_hint': 'Describe the writing style to pass to the AI',
+    'ai.language_label': 'Language',
+    'ai.lang_ko': '한국어',
+    'ai.lang_en': 'English',
+    'ai.time_label': 'Generation Time',
+
+    // Storage detail
+    'storage.local_title': 'Local Storage',
+    'storage.path_label': 'Save Path',
+    'storage.pick_folder': 'Choose Folder',
+    'storage.path_hint': 'Retros will be saved as markdown files at this path',
+    'storage.local_summary': 'Local',
+    'storage.none': 'None',
+
+    // GitHub
+    'github.step1': '1. Create a token on GitHub',
+    'github.open_token': 'Create Token on GitHub',
+    'github.step2': '2. Paste the generated token below',
+    'github.connect': 'Connect',
+    'github.connecting': 'Connecting...',
+    'github.connect_fail': 'Connection failed: ',
+    'github.repo_label': 'Repository',
+    'github.repo_select': 'Select repo...',
+    'github.repo_loading': 'Loading...',
+    'github.repo_load_fail': 'Failed to load repos',
+    'github.folder_label': 'Save Folder',
+    'github.test_btn': 'Test Connection',
+    'github.disconnect_btn': 'Disconnect',
+    'github.select_repo': 'Please select a repository',
+    'github.testing': 'Testing...',
+    'github.path_hint': 'Will commit to {repo}/{folder}/{date}.md',
+
+    // Notion
+    'notion.step1': '1. Create an integration on Notion',
+    'notion.open_integration': 'Create Integration on Notion',
+    'notion.step2': '2. Paste the integration token below',
+    'notion.step3': '3. Connect the integration to the database you want to use in Notion',
+    'notion.connect': 'Connect',
+    'notion.connecting': 'Connecting...',
+    'notion.connect_fail': 'Connection failed: ',
+    'notion.db_label': 'Database',
+    'notion.db_select': 'Select database...',
+    'notion.db_loading': 'Loading...',
+    'notion.db_load_fail': 'Failed to load databases',
+    'notion.db_hint': 'A new page will be created daily in the selected database',
+    'notion.test_btn': 'Test Connection',
+    'notion.disconnect_btn': 'Disconnect',
+    'notion.select_db': 'Please select a database',
+    'notion.testing': 'Testing...',
+
+    // Data source detail
+    'data.aw_label': 'ActivityWatch',
+    'data.aw_desc': 'ActivityWatch handles activity tracking.\nActivityWatch must be running to fetch data.',
+    'data.check_btn': 'Check Connection',
+    'data.excluded_title': 'Excluded Apps',
+    'data.excluded_desc': 'Apps in this list will be excluded from retros',
+    'data.excluded_none': 'No excluded apps',
+    'data.excluded_placeholder': 'App name',
+    'data.add_btn': 'Add',
+    'data.summary': 'ActivityWatch · {count} excluded apps',
+
+    // Connection badges
+    'badge.connected': 'Connected',
+    'badge.disconnected': 'Disconnected',
+    'badge.checking': 'Checking',
+    'badge.error': 'Error',
+
+    // Retro tab
+    'retro.empty_text': 'No retros generated yet',
+    'retro.empty_sub': 'Press the button below to start today\'s retro',
+    'retro.empty_sub_list': 'Press the button above to start today\'s retro',
+    'retro.generate_btn': 'Generate Retro Manually',
+    'retro.generating': 'Generating...',
+    'retro.generating_msg': 'Generating AI retro...',
+    'retro.generated_ok': 'Retro generated successfully!',
+    'retro.generated_fail': 'Generation failed: ',
+    'retro.generate_retry': 'Generate Today\'s Retro',
+    'retro.past_title': 'Past Retros',
+    'retro.back': 'Retro List',
+    'retro.title_suffix': ' Retro',
+
+    // AI summary (settings card)
+    'summary.tone_diary': 'Diary',
+    'summary.tone_blog': 'Blog',
+    'summary.tone_bullet': 'Bullet',
+    'summary.tone_custom': 'Custom',
+    'summary.lang_ko': '한국어',
+    'summary.lang_en': 'English',
+
+    // Local path hint
+    'storage.path_format': 'Saves as {path}/{year}/{date}.md',
+
+    // Toast
+    'toast.saved': 'Saved',
+  },
+};
+
+function t(key) {
+  return i18n[currentLang]?.[key] || i18n['ko'][key] || key;
+}
+
+function applyLanguage(lang) {
+  currentLang = lang;
+  document.documentElement.lang = lang;
+
+  // Apply all data-i18n attributes
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+
+  // Apply data-i18n-placeholder attributes
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = t(key);
+  });
+
+  // Re-render dynamic content that depends on language
+  updateSettingsSummaries();
+}
 
 // --- Onboarding ---
 let _onboardingPollTimer = null;
@@ -15,17 +358,15 @@ function detectOS() {
 }
 
 function getDownloadUrl() {
-  const os = detectOS();
   const base = "https://activitywatch.net/downloads/";
-  // Direct to downloads page; OS-specific deep links aren't stable across releases
   return base;
 }
 
 function getDownloadLabel() {
   const os = detectOS();
-  if (os === "mac") return "macOS용 ActivityWatch 다운로드";
-  if (os === "windows") return "Windows용 ActivityWatch 다운로드";
-  return "Linux용 ActivityWatch 다운로드";
+  if (os === "mac") return t('onboarding.download_mac');
+  if (os === "windows") return t('onboarding.download_windows');
+  return t('onboarding.download_linux');
 }
 
 async function checkAwOnline() {
@@ -66,7 +407,7 @@ function startOnboardingPoll() {
       const dot = document.getElementById("onboarding-polling-dot");
       const statusEl = document.getElementById("onboarding-polling-status");
       if (dot) dot.classList.add("connected");
-      if (statusEl) statusEl.querySelector("span").textContent = "ActivityWatch 연결됨!";
+      if (statusEl) statusEl.querySelector("span").textContent = t('onboarding.aw_connected');
       stopOnboardingPoll();
       setTimeout(() => {
         hideOnboarding();
@@ -97,7 +438,6 @@ function initOnboardingEvents() {
   // Download button — open AW downloads page in system browser
   document.getElementById("onboarding-download-btn").addEventListener("click", async () => {
     const url = getDownloadUrl();
-    // Try Tauri shell plugin JS API (available if plugin is initialized with JS bindings)
     try {
       const shellModule = window.__TAURI__?.shell;
       if (shellModule?.open) {
@@ -105,10 +445,7 @@ function initOnboardingEvents() {
         return;
       }
     } catch { /* fall through */ }
-    // Fallback: invoke existing open-URL pattern via shell
     try {
-      // Use the open_github_token_page trick: invoke a known open command isn't feasible,
-      // so we rely on the Tauri webview treating window.open as external link
       window.open(url, "_blank");
     } catch { /* ignore */ }
   });
@@ -118,13 +455,13 @@ function initOnboardingEvents() {
     const btn = document.getElementById("onboarding-check-btn");
     const statusEl = document.getElementById("onboarding-polling-status");
     btn.disabled = true;
-    btn.textContent = "확인 중...";
+    btn.textContent = t('onboarding.checking_btn');
 
     const online = await checkAwOnline();
     if (online) {
       const dot = statusEl.querySelector(".onboarding-polling-dot");
       if (dot) dot.classList.add("connected");
-      statusEl.querySelector("span").textContent = "ActivityWatch 연결됨!";
+      statusEl.querySelector("span").textContent = t('onboarding.aw_connected');
       stopOnboardingPoll();
       setTimeout(() => {
         hideOnboarding();
@@ -132,9 +469,9 @@ function initOnboardingEvents() {
         loadAwStats();
       }, 800);
     } else {
-      statusEl.querySelector("span").textContent = "아직 연결되지 않았습니다";
+      statusEl.querySelector("span").textContent = t('onboarding.not_connected');
       btn.disabled = false;
-      btn.textContent = "연결 확인";
+      btn.textContent = t('onboarding.check_btn');
     }
   });
 
@@ -212,14 +549,14 @@ async function loadAwStats() {
 
     if (stats.aw_connected) {
       trackingDot.className = "hero-status-dot active";
-      trackingText.textContent = "ActivityWatch 연결됨";
-      awSub.textContent = "활동 데이터를 가져오고 있습니다";
+      trackingText.textContent = t('tracking.connected');
+      awSub.textContent = t('tracking.fetching');
       _awWasConnected = true;
       hideBanner();
     } else {
       trackingDot.className = "hero-status-dot paused";
-      trackingText.textContent = "ActivityWatch 미연결";
-      awSub.textContent = "ActivityWatch를 실행해주세요";
+      trackingText.textContent = t('tracking.disconnected');
+      awSub.textContent = t('tracking.please_run');
       // If AW was previously connected and is now gone, show subtle banner (not full onboarding)
       if (_awWasConnected) {
         showBanner();
@@ -234,22 +571,22 @@ async function loadAwStats() {
     const idleRemainingMins = idleMinutes % 60;
 
     if (activeHours > 0) {
-      todayActiveTime.textContent = `${activeHours}시간 ${activeRemainingMins}분`;
+      todayActiveTime.textContent = t('time.hours_mins').replace('{h}', activeHours).replace('{m}', activeRemainingMins);
     } else {
-      todayActiveTime.textContent = `${activeRemainingMins}분`;
+      todayActiveTime.textContent = t('time.mins').replace('{m}', activeRemainingMins);
     }
 
     if (idleHours > 0) {
-      todayIdleTime.textContent = `${idleHours}시간 ${idleRemainingMins}분`;
+      todayIdleTime.textContent = t('time.hours_mins').replace('{h}', idleHours).replace('{m}', idleRemainingMins);
     } else {
-      todayIdleTime.textContent = `${idleRemainingMins}분`;
+      todayIdleTime.textContent = t('time.mins').replace('{m}', idleRemainingMins);
     }
 
     todayCount.textContent = (stats.event_count || 0).toLocaleString();
   } catch (e) {
     console.error("Failed to load AW stats:", e);
     if (trackingDot) trackingDot.className = "hero-status-dot paused";
-    if (trackingText) trackingText.textContent = "AW 연결 실패";
+    if (trackingText) trackingText.textContent = t('tracking.failed');
     if (awSub) awSub.textContent = e.toString();
   }
 }
@@ -274,7 +611,8 @@ async function loadConfig() {
     document.getElementById("retro-tone").value = currentConfig.retro_tone || "diary";
     document.getElementById("custom-tone").value = currentConfig.custom_tone || "";
     toggleCustomTone();
-    document.getElementById("retro-language").value = currentConfig.retro_language || "ko";
+    const savedLang = currentConfig.retro_language || "ko";
+    document.getElementById("retro-language").value = savedLang;
     document.getElementById("retro-time").value = currentConfig.retro_time || "23:50";
     document.getElementById("local-save-path").value = currentConfig.local_save_path || "";
     document.getElementById("github-folder").value = currentConfig.github_folder || "retrospectives";
@@ -302,6 +640,9 @@ async function loadConfig() {
 
     renderExcludedApps(currentConfig.excluded_apps || []);
     updateSettingsSummaries();
+
+    // Apply language from config
+    applyLanguage(savedLang);
   } catch (e) {
     console.error("Failed to load config:", e);
   }
@@ -313,7 +654,10 @@ function updateLocalPathHint() {
   if (path) {
     const today = new Date().toISOString().slice(0, 10);
     const year = today.slice(0, 4);
-    hint.textContent = `${path}/${year}/${today}.md 형태로 저장됩니다`;
+    hint.textContent = t('storage.path_format')
+      .replace('{path}', path)
+      .replace('{year}', year)
+      .replace('{date}', today);
   }
 }
 
@@ -323,7 +667,10 @@ function updateGitHubPathHint() {
   const hint = document.getElementById("github-path-hint");
   const today = new Date().toISOString().slice(0, 10);
   if (select.value) {
-    hint.textContent = `${select.value}/${folder}/${today}.md 형태로 커밋됩니다`;
+    hint.textContent = t('github.path_hint')
+      .replace('{repo}', select.value)
+      .replace('{folder}', folder)
+      .replace('{date}', today);
   } else {
     hint.textContent = "";
   }
@@ -333,14 +680,14 @@ function updateGitHubPathHint() {
 async function showGitHubConnected() {
   document.getElementById("github-setup").classList.add("hidden");
   document.getElementById("github-connected").classList.remove("hidden");
-  document.getElementById("github-status-badge").textContent = "연결됨";
+  document.getElementById("github-status-badge").textContent = t('badge.connected');
   document.getElementById("github-status-badge").className = "connection-badge connected";
 
   try {
     const select = document.getElementById("github-repo-select");
-    select.innerHTML = '<option value="">로딩 중...</option>';
+    select.innerHTML = `<option value="">${t('github.repo_loading')}</option>`;
     const repos = await invoke("fetch_github_repos", { token: currentConfig.github_token });
-    select.innerHTML = '<option value="">레포 선택...</option>';
+    select.innerHTML = `<option value="">${t('github.repo_select')}</option>`;
     repos.forEach((repo) => {
       const opt = document.createElement("option");
       opt.value = repo.full_name;
@@ -360,7 +707,7 @@ async function showGitHubConnected() {
   } catch (e) {
     console.error("Failed to fetch repos:", e);
     document.getElementById("github-repo-select").innerHTML =
-      '<option value="">레포 목록 불러오기 실패</option>';
+      `<option value="">${t('github.repo_load_fail')}</option>`;
   }
 }
 
@@ -378,7 +725,7 @@ async function connectGitHub() {
   const btn = document.getElementById("github-connect-btn");
   const errEl = document.getElementById("github-connect-error");
   btn.disabled = true;
-  btn.textContent = "연결 중...";
+  btn.textContent = t('github.connecting');
   errEl.classList.add("hidden");
 
   try {
@@ -387,11 +734,11 @@ async function connectGitHub() {
     await invoke("set_config", { githubToken: token });
     await loadConfig();
   } catch (e) {
-    errEl.textContent = "연결 실패: " + e;
+    errEl.textContent = t('github.connect_fail') + e;
     errEl.classList.remove("hidden");
   } finally {
     btn.disabled = false;
-    btn.textContent = "연결";
+    btn.textContent = t('github.connect');
   }
 }
 
@@ -407,13 +754,13 @@ async function testGitHub() {
   const resultEl = document.getElementById("github-test-result");
 
   if (!select.value || !opt) {
-    resultEl.textContent = "레포를 선택해주세요";
+    resultEl.textContent = t('github.select_repo');
     resultEl.className = "connect-message error";
     resultEl.classList.remove("hidden");
     return;
   }
 
-  resultEl.textContent = "테스트 중...";
+  resultEl.textContent = t('github.testing');
   resultEl.className = "connect-message info";
   resultEl.classList.remove("hidden");
 
@@ -435,14 +782,14 @@ async function testGitHub() {
 async function showNotionConnected() {
   document.getElementById("notion-setup").classList.add("hidden");
   document.getElementById("notion-connected").classList.remove("hidden");
-  document.getElementById("notion-status-badge").textContent = "연결됨";
+  document.getElementById("notion-status-badge").textContent = t('badge.connected');
   document.getElementById("notion-status-badge").className = "connection-badge connected";
 
   try {
     const select = document.getElementById("notion-db-select");
-    select.innerHTML = '<option value="">로딩 중...</option>';
+    select.innerHTML = `<option value="">${t('notion.db_loading')}</option>`;
     const dbs = await invoke("fetch_notion_databases", { token: currentConfig.notion_token });
-    select.innerHTML = '<option value="">데이터베이스 선택...</option>';
+    select.innerHTML = `<option value="">${t('notion.db_select')}</option>`;
     dbs.forEach((db) => {
       const opt = document.createElement("option");
       opt.value = db.id;
@@ -456,7 +803,7 @@ async function showNotionConnected() {
   } catch (e) {
     console.error("Failed to fetch databases:", e);
     document.getElementById("notion-db-select").innerHTML =
-      '<option value="">데이터베이스 불러오기 실패</option>';
+      `<option value="">${t('notion.db_load_fail')}</option>`;
   }
 }
 
@@ -474,7 +821,7 @@ async function connectNotion() {
   const btn = document.getElementById("notion-connect-btn");
   const errEl = document.getElementById("notion-connect-error");
   btn.disabled = true;
-  btn.textContent = "연결 중...";
+  btn.textContent = t('notion.connecting');
   errEl.classList.add("hidden");
 
   try {
@@ -483,11 +830,11 @@ async function connectNotion() {
     await invoke("set_config", { notionToken: token });
     await loadConfig();
   } catch (e) {
-    errEl.textContent = "연결 실패: " + e;
+    errEl.textContent = t('notion.connect_fail') + e;
     errEl.classList.remove("hidden");
   } finally {
     btn.disabled = false;
-    btn.textContent = "연결";
+    btn.textContent = t('notion.connect');
   }
 }
 
@@ -502,13 +849,13 @@ async function testNotion() {
   const resultEl = document.getElementById("notion-test-result");
 
   if (!select.value) {
-    resultEl.textContent = "데이터베이스를 선택해주세요";
+    resultEl.textContent = t('notion.select_db');
     resultEl.className = "connect-message error";
     resultEl.classList.remove("hidden");
     return;
   }
 
-  resultEl.textContent = "테스트 중...";
+  resultEl.textContent = t('notion.testing');
   resultEl.className = "connect-message info";
   resultEl.classList.remove("hidden");
 
@@ -577,6 +924,7 @@ async function saveConfig() {
 
 function showToast() {
   const toast = document.getElementById("toast");
+  toast.textContent = t('toast.saved');
   toast.classList.remove("hidden");
   toast.classList.add("show");
   setTimeout(() => {
@@ -619,26 +967,34 @@ function toggleCustomTone() {
 // --- Summary Text Updates ---
 function updateSettingsSummaries() {
   // AI summary
-  const toneMap = { diary: "일기체", blog: "블로그", bullet: "불렛", custom: "커스텀" };
-  const langMap = { ko: "한국어", en: "English" };
+  const toneMap = {
+    diary: t('summary.tone_diary'),
+    blog: t('summary.tone_blog'),
+    bullet: t('summary.tone_bullet'),
+    custom: t('summary.tone_custom'),
+  };
+  const langMap = {
+    ko: t('summary.lang_ko'),
+    en: t('summary.lang_en'),
+  };
   const toneVal = document.getElementById("retro-tone").value;
   const tone = toneVal === "custom"
-    ? (document.getElementById("custom-tone").value || "커스텀")
-    : (toneMap[toneVal] || "일기체");
-  const lang = langMap[document.getElementById("retro-language").value] || "한국어";
+    ? (document.getElementById("custom-tone").value || t('summary.tone_custom'))
+    : (toneMap[toneVal] || t('summary.tone_diary'));
+  const lang = langMap[document.getElementById("retro-language").value] || t('summary.lang_ko');
   const time = document.getElementById("retro-time").value || "23:50";
   document.getElementById("ai-summary").textContent = `${tone} · ${lang} · ${time}`;
 
   // Storage summary
   const storages = [];
-  if (document.getElementById("save-local").checked) storages.push("로컬");
+  if (document.getElementById("save-local").checked) storages.push(t('storage.local_summary'));
   if (document.getElementById("save-github").checked) storages.push("GitHub");
   if (document.getElementById("save-notion").checked) storages.push("Notion");
-  document.getElementById("storage-summary").textContent = storages.length > 0 ? storages.join(" · ") : "없음";
+  document.getElementById("storage-summary").textContent = storages.length > 0 ? storages.join(" · ") : t('storage.none');
 
   // Data source summary
   const excludedCount = (currentConfig?.excluded_apps || []).length;
-  document.getElementById("data-summary").textContent = `ActivityWatch · 제외 앱 ${excludedCount}개`;
+  document.getElementById("data-summary").textContent = t('data.summary').replace('{count}', excludedCount);
 
   // Toggle local detail visibility
   const localDetail = document.getElementById("local-detail");
@@ -650,20 +1006,20 @@ function updateSettingsSummaries() {
 // --- AW Connection Check ---
 async function checkAwConnection() {
   const badge = document.getElementById("aw-connection-badge");
-  badge.textContent = "확인 중...";
+  badge.textContent = t('badge.checking');
   badge.className = "connection-badge";
 
   try {
     const connected = await invoke("check_aw_connection");
     if (connected) {
-      badge.textContent = "연결됨";
+      badge.textContent = t('badge.connected');
       badge.className = "connection-badge connected";
     } else {
-      badge.textContent = "미연결";
+      badge.textContent = t('badge.disconnected');
       badge.className = "connection-badge disconnected";
     }
   } catch (e) {
-    badge.textContent = "오류";
+    badge.textContent = t('badge.error');
     badge.className = "connection-badge disconnected";
   }
 }
@@ -685,7 +1041,7 @@ async function pickFolder() {
 function renderExcludedApps(apps) {
   const list = document.getElementById("excluded-list");
   if (apps.length === 0) {
-    list.innerHTML = '<span class="text-muted">제외된 앱 없음</span>';
+    list.innerHTML = `<span class="text-muted">${t('data.excluded_none')}</span>`;
     return;
   }
 
@@ -748,7 +1104,7 @@ async function loadTodayActivities() {
   } catch (e) {
     console.error("Failed to load today activities:", e);
     document.getElementById("today-activities").innerHTML =
-      '<p class="text-muted">ActivityWatch에서 데이터를 가져올 수 없습니다.</p>';
+      `<p class="text-muted">${t('activity.no_data')}</p>`;
   }
 }
 
@@ -763,8 +1119,8 @@ async function loadRetros() {
       if (listTitle) listTitle.style.display = "none";
       container.innerHTML = `<div class="empty-state">
         <span class="empty-state-icon">&#x1F4DD;</span>
-        <p class="empty-state-text">아직 생성된 회고글이 없습니다</p>
-        <p class="empty-state-sub">위 버튼을 눌러 오늘의 회고를 시작하세요</p>
+        <p class="empty-state-text">${t('retro.empty_text')}</p>
+        <p class="empty-state-sub">${t('retro.empty_sub_list')}</p>
       </div>`;
       return;
     }
@@ -802,7 +1158,7 @@ function showRetroPreview(retro) {
   const title = document.getElementById("retro-preview-title");
   const content = document.getElementById("retro-preview-content");
 
-  title.textContent = retro.date + " 회고";
+  title.textContent = retro.date + t('retro.title_suffix');
   content.innerHTML = simpleMarkdown(retro.content);
   document.getElementById("retro-main").style.display = "none";
   document.getElementById("retro-detail").classList.add("active");
@@ -829,25 +1185,25 @@ async function generateNow() {
   const statusEl = document.getElementById("generate-status");
 
   btn.disabled = true;
-  if (btnText) btnText.textContent = "생성 중...";
+  if (btnText) btnText.textContent = t('retro.generating');
   statusEl.classList.remove("hidden", "error", "success");
-  statusEl.textContent = "AI 회고글을 생성하고 있습니다...";
+  statusEl.textContent = t('retro.generating_msg');
   statusEl.classList.add("info");
 
   try {
     const content = await invoke("generate_now");
-    statusEl.textContent = "회고글이 성공적으로 생성되었습니다!";
+    statusEl.textContent = t('retro.generated_ok');
     statusEl.classList.remove("info");
     statusEl.classList.add("success");
     await loadRetros();
     await loadStatus();
   } catch (e) {
-    statusEl.textContent = "생성 실패: " + e;
+    statusEl.textContent = t('retro.generated_fail') + e;
     statusEl.classList.remove("info");
     statusEl.classList.add("error");
   } finally {
     btn.disabled = false;
-    if (btnText) btnText.textContent = "오늘의 회고 생성하기";
+    if (btnText) btnText.textContent = t('retro.generate_retry');
   }
 }
 
@@ -917,7 +1273,11 @@ document.getElementById("retro-tone").addEventListener("change", () => {
   debouncedSaveConfig();
 });
 document.getElementById("custom-tone").addEventListener("input", debouncedSaveConfig);
-document.getElementById("retro-language").addEventListener("change", debouncedSaveConfig);
+document.getElementById("retro-language").addEventListener("change", () => {
+  const lang = document.getElementById("retro-language").value;
+  applyLanguage(lang);
+  debouncedSaveConfig();
+});
 document.getElementById("retro-time").addEventListener("change", debouncedSaveConfig);
 document.getElementById("save-local").addEventListener("change", () => {
   const localDetail = document.getElementById("local-detail");
