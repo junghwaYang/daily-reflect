@@ -516,16 +516,7 @@ select {
   font-size: 11px;
 }
 
-.btn-success {
-  background: #2e7d32;
-  border-color: #2e7d32;
-  color: white;
-}
 
-.btn-danger {
-  color: #ff3b30;
-  border-color: #e0e0e0;
-}
 
 .btn-danger:hover {
   background: rgba(255, 59, 48, 0.06);
