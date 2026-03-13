@@ -461,3 +461,131 @@ impl AwClient {
         Ok(summary)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_aw_api_base_valid_localhost() {
+        assert!(validate_aw_api_base("http://localhost:5600/api/0"));
+    }
+
+    #[test]
+    fn test_validate_aw_api_base_valid_ipv4_loopback() {
+        assert!(validate_aw_api_base("http://127.0.0.1:5600/api/0"));
+    }
+
+    #[test]
+    fn test_validate_aw_api_base_valid_ipv6_loopback() {
+        assert!(validate_aw_api_base("http://[::1]:5600/api/0"));
+    }
+
+    #[test]
+    fn test_validate_aw_api_base_valid_with_trimming() {
+        assert!(validate_aw_api_base("  http://localhost:5600  "));
+    }
+
+    #[test]
+    fn test_validate_aw_api_base_invalid_evil_domain() {
+        assert!(!validate_aw_api_base("http://evil.com"));
+    }
+
+    #[test]
+    fn test_validate_aw_api_base_invalid_https() {
+        assert!(!validate_aw_api_base("https://localhost:5600"));
+    }
+
+    #[test]
+    fn test_validate_aw_api_base_invalid_ftp() {
+        assert!(!validate_aw_api_base("ftp://127.0.0.1"));
+    }
+
+    #[test]
+    fn test_validate_aw_api_base_invalid_empty() {
+        assert!(!validate_aw_api_base(""));
+    }
+
+    #[test]
+    fn test_sanitize_bucket_id_valid_aw_watcher_window() {
+        assert_eq!(
+            sanitize_bucket_id("aw-watcher-window_my-pc").expect("should be valid"),
+            "aw-watcher-window_my-pc"
+        );
+    }
+
+    #[test]
+    fn test_sanitize_bucket_id_valid_with_dot_and_dash() {
+        assert_eq!(
+            sanitize_bucket_id("bucket.name-v2").expect("should be valid"),
+            "bucket.name-v2"
+        );
+    }
+
+    #[test]
+    fn test_sanitize_bucket_id_valid_simple() {
+        assert_eq!(
+            sanitize_bucket_id("simple").expect("should be valid"),
+            "simple"
+        );
+    }
+
+    #[test]
+    fn test_sanitize_bucket_id_invalid_path_traversal_like() {
+        assert!(sanitize_bucket_id("bucket/../../etc").is_err());
+    }
+
+    #[test]
+    fn test_sanitize_bucket_id_invalid_spaces() {
+        assert!(sanitize_bucket_id("bucket id with spaces").is_err());
+    }
+
+    #[test]
+    fn test_sanitize_bucket_id_invalid_semicolon() {
+        assert!(sanitize_bucket_id("bucket;drop").is_err());
+    }
+
+    #[test]
+    fn test_sanitize_bucket_id_invalid_script_like() {
+        assert!(sanitize_bucket_id("bucket<script>").is_err());
+    }
+
+    #[test]
+    fn test_aw_client_new_empty_uses_default_base() {
+        let client = AwClient::new("");
+        assert_eq!(client.base_url, DEFAULT_AW_BASE);
+    }
+
+    #[test]
+    fn test_aw_client_new_valid_localhost_trims_trailing_slash() {
+        let client = AwClient::new("http://localhost:5600/api/0/");
+        assert_eq!(client.base_url, "http://localhost:5600/api/0");
+    }
+
+    #[test]
+    fn test_aw_client_new_invalid_url_falls_back_to_default() {
+        let client = AwClient::new("http://evil.com/api");
+        assert_eq!(client.base_url, DEFAULT_AW_BASE);
+    }
+
+    #[test]
+    fn test_aw_client_date_range_valid_date_returns_rfc3339_strings() {
+        let (start, end) = AwClient::date_range("2026-03-14").expect("valid date should parse");
+
+        let parsed_start =
+            chrono::DateTime::parse_from_rfc3339(&start).expect("start should be RFC3339");
+        let parsed_end = chrono::DateTime::parse_from_rfc3339(&end).expect("end should be RFC3339");
+
+        assert!(parsed_start < parsed_end);
+    }
+
+    #[test]
+    fn test_aw_client_date_range_invalid_not_a_date_returns_err() {
+        assert!(AwClient::date_range("not-a-date").is_err());
+    }
+
+    #[test]
+    fn test_aw_client_date_range_invalid_month_returns_err() {
+        assert!(AwClient::date_range("2026-13-01").is_err());
+    }
+}

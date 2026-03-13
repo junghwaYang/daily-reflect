@@ -114,3 +114,59 @@ fn build_prompt(activities: &str, tone: &str, custom_tone: &str, language: &str)
         활동 로그:\n{activities}"
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const ACTIVITIES: &str = "[Code] Implemented test suite";
+
+    fn assert_activity_present(output: &str) {
+        assert!(output.contains(ACTIVITIES));
+    }
+
+    #[test]
+    fn build_prompt_diary_ko_contains_diary_and_korean() {
+        let output = build_prompt(ACTIVITIES, "diary", "", "ko");
+        assert!(output.contains("일기체"));
+        assert!(output.contains("한국어"));
+        assert_activity_present(&output);
+    }
+
+    #[test]
+    fn build_prompt_blog_en_contains_blog_and_english() {
+        let output = build_prompt(ACTIVITIES, "blog", "", "en");
+        assert!(output.contains("블로그"));
+        assert!(output.contains("English"));
+        assert_activity_present(&output);
+    }
+
+    #[test]
+    fn build_prompt_bullet_ko_contains_bullet_instruction() {
+        let output = build_prompt(ACTIVITIES, "bullet", "", "ko");
+        assert!(output.contains("불렛"));
+        assert_activity_present(&output);
+    }
+
+    #[test]
+    fn build_prompt_custom_en_uses_custom_tone_and_english() {
+        let output = build_prompt(ACTIVITIES, "custom", "technical report style", "en");
+        assert!(output.contains("technical report style"));
+        assert!(output.contains("English"));
+        assert_activity_present(&output);
+    }
+
+    #[test]
+    fn build_prompt_custom_empty_ko_falls_back_to_diary() {
+        let output = build_prompt(ACTIVITIES, "custom", "", "ko");
+        assert!(output.contains("일기체"));
+        assert_activity_present(&output);
+    }
+
+    #[test]
+    fn build_prompt_unknown_tone_ko_falls_back_to_diary() {
+        let output = build_prompt(ACTIVITIES, "unknown_value", "", "ko");
+        assert!(output.contains("일기체"));
+        assert_activity_present(&output);
+    }
+}

@@ -17,8 +17,8 @@ impl ActivityBuffer {
                 .map_err(|e| format!("Failed to create db directory: {}", e))?;
         }
 
-        let conn = Connection::open(&db_path)
-            .map_err(|e| format!("Failed to open database: {}", e))?;
+        let conn =
+            Connection::open(&db_path).map_err(|e| format!("Failed to open database: {}", e))?;
 
         Self::init_db(&conn)?;
 
@@ -125,4 +125,109 @@ pub struct RetroEntry {
     pub pushed_github: bool,
     pub pushed_notion: bool,
     pub created_at: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    impl ActivityBuffer {
+        fn new_in_memory() -> Result<Self, String> {
+            let conn = Connection::open_in_memory()
+                .map_err(|e| format!("Failed to open in-memory db: {}", e))?;
+            Self::init_db(&conn)?;
+            Ok(Self {
+                conn: Mutex::new(conn),
+            })
+        }
+    }
+
+    #[test]
+    fn save_and_get_recent_retrospective_round_trip() {
+        let buffer = ActivityBuffer::new_in_memory().expect("create in-memory buffer");
+
+        buffer
+            .save_retrospective("2026-03-14", "retrospective content")
+            .expect("save retrospective");
+
+        let entries = buffer
+            .get_recent_retrospectives(1)
+            .expect("get retrospectives");
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].date, "2026-03-14");
+        assert_eq!(entries[0].content, "retrospective content");
+    }
+
+    #[test]
+    fn save_retrospective_replaces_existing_date() {
+        let buffer = ActivityBuffer::new_in_memory().expect("create in-memory buffer");
+
+        buffer
+            .save_retrospective("2026-03-14", "content A")
+            .expect("save first retrospective");
+        buffer
+            .save_retrospective("2026-03-14", "content B")
+            .expect("replace retrospective");
+
+        let entries = buffer
+            .get_recent_retrospectives(1)
+            .expect("get retrospectives");
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].content, "content B");
+    }
+
+    #[test]
+    fn mark_pushed_flags_update_independently() {
+        let buffer = ActivityBuffer::new_in_memory().expect("create in-memory buffer");
+
+        buffer
+            .save_retrospective("2026-03-14", "content")
+            .expect("save retrospective");
+        buffer
+            .mark_pushed_github("2026-03-14")
+            .expect("mark github pushed");
+
+        let entries = buffer
+            .get_recent_retrospectives(1)
+            .expect("get retrospectives");
+        assert_eq!(entries.len(), 1);
+        assert!(entries[0].pushed_github);
+        assert!(!entries[0].pushed_notion);
+    }
+
+    #[test]
+    fn get_recent_retrospectives_returns_newest_first_with_limit() {
+        let buffer = ActivityBuffer::new_in_memory().expect("create in-memory buffer");
+
+        buffer
+            .save_retrospective("2026-03-12", "first")
+            .expect("save 2026-03-12");
+        buffer
+            .save_retrospective("2026-03-13", "second")
+            .expect("save 2026-03-13");
+        buffer
+            .save_retrospective("2026-03-14", "third")
+            .expect("save 2026-03-14");
+
+        let entries = buffer
+            .get_recent_retrospectives(2)
+            .expect("get limited retrospectives");
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].date, "2026-03-14");
+        assert_eq!(entries[1].date, "2026-03-13");
+    }
+
+    #[test]
+    fn today_date_str_has_yyyy_mm_dd_format() {
+        let today = ActivityBuffer::today_date_str();
+        let parts: Vec<&str> = today.split('-').collect();
+
+        assert_eq!(parts.len(), 3);
+        assert_eq!(parts[0].len(), 4);
+        assert_eq!(parts[1].len(), 2);
+        assert_eq!(parts[2].len(), 2);
+        assert!(parts
+            .iter()
+            .all(|part| part.chars().all(|c| c.is_ascii_digit())));
+    }
 }

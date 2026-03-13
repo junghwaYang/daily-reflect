@@ -645,3 +645,27 @@ async fn retro_schedule_loop(handle: tauri::AppHandle, buffer: Arc<ActivityBuffe
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn validate_aw_api_base_accepts_localhost_variants() {
+        assert!(validate_aw_api_base("http://localhost:5600"));
+        assert!(validate_aw_api_base("http://127.0.0.1:5600/api/0"));
+        assert!(validate_aw_api_base("http://[::1]:5600"));
+    }
+
+    #[test]
+    fn validate_aw_api_base_rejects_non_local_urls() {
+        assert!(!validate_aw_api_base("http://evil.com"));
+        assert!(!validate_aw_api_base("https://attacker.com/http://localhost"));
+        assert!(!validate_aw_api_base(""));
+    }
+
+    #[test]
+    fn validate_aw_api_base_trims_and_is_case_insensitive() {
+        assert!(validate_aw_api_base("  HTTP://LOCALHOST:5600  "));
+    }
+}

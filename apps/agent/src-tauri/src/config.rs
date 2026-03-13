@@ -173,3 +173,74 @@ impl AppState {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn deserialize_compat(raw: &str) -> AppConfig {
+        let mut value: serde_json::Value = serde_json::from_str(raw).expect("parse JSON value");
+        if let serde_json::Value::Object(map) = &mut value {
+            map.entry("excluded_apps".to_string())
+                .or_insert_with(|| serde_json::Value::Array(Vec::new()));
+        }
+        serde_json::from_value(value).expect("deserialize AppConfig")
+    }
+
+    fn assert_expected_defaults(config: &AppConfig) {
+        assert_eq!(config.aw_api_base, "http://127.0.0.1:5600/api/0");
+        assert_eq!(config.retro_tone, "diary");
+        assert_eq!(config.retro_language, "ko");
+        assert_eq!(config.retro_time, "23:50");
+        assert!(config.save_local);
+        assert!(!config.save_github);
+        assert!(!config.save_notion);
+        assert_eq!(config.storage_type, "local");
+        assert_eq!(config.github_folder, "retrospectives");
+        assert!(config.gemini_api_key.is_empty());
+        assert!(config.excluded_apps.is_empty());
+    }
+
+    #[test]
+    fn app_config_default_values_match_expected() {
+        let config = AppConfig::default();
+        assert_expected_defaults(&config);
+    }
+
+    #[test]
+    fn app_config_serialization_round_trip_preserves_fields() {
+        let config = AppConfig::default();
+        let json = serde_json::to_string(&config).expect("serialize AppConfig");
+        let decoded: AppConfig = serde_json::from_str(&json).expect("deserialize AppConfig");
+
+        assert_eq!(decoded.aw_api_base, config.aw_api_base);
+        assert_eq!(decoded.retro_tone, config.retro_tone);
+        assert_eq!(decoded.retro_language, config.retro_language);
+        assert_eq!(decoded.retro_time, config.retro_time);
+        assert_eq!(decoded.save_local, config.save_local);
+        assert_eq!(decoded.save_github, config.save_github);
+        assert_eq!(decoded.save_notion, config.save_notion);
+        assert_eq!(decoded.storage_type, config.storage_type);
+        assert_eq!(decoded.github_folder, config.github_folder);
+        assert_eq!(decoded.gemini_api_key, config.gemini_api_key);
+        assert_eq!(decoded.excluded_apps, config.excluded_apps);
+    }
+
+    #[test]
+    fn app_config_deserialization_with_missing_fields_uses_defaults_and_keeps_present_values() {
+        let config = deserialize_compat(r#"{"gemini_api_key":"test-key"}"#);
+
+        assert_eq!(config.gemini_api_key, "test-key");
+        assert_expected_defaults(&AppConfig {
+            gemini_api_key: String::new(),
+            ..config.clone()
+        });
+    }
+
+    #[test]
+    fn app_config_deserialization_from_empty_object_uses_defaults() {
+        let config = deserialize_compat("{}");
+
+        assert_expected_defaults(&config);
+    }
+}
