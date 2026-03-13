@@ -102,6 +102,7 @@ export default function Home() {
 
   const GITHUB_URL = "https://github.com/junghwaYang/daily-reflect";
   const RELEASES_URL = `${GITHUB_URL}/releases`;
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
@@ -259,8 +260,8 @@ export default function Home() {
 
           <div className="mt-16 grid gap-6 md:grid-cols-2">
             {[
-              { label: t.preview.statusLabel, src: "/screenshot-status.png" },
-              { label: t.preview.retroLabel, src: "/screenshot-retro.png" },
+              { label: t.preview.statusLabel, src: `${basePath}/screenshot-status.png` },
+              { label: t.preview.retroLabel, src: `${basePath}/screenshot-retro.png` },
             ].map(({ label, src }) => (
               <div key={label} className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
                 {/* Window chrome */}
