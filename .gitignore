@@ -10,3 +10,13 @@ dist/
 target/
 .omc/
 Cargo.lock
+
+# Build artifacts
+*.dmg
+*.app
+*.exe
+*.msi
+*.AppImage
+*.deb
+*.rpm
+out/

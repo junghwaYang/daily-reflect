@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     description:
       "컴퓨터 활동을 자동으로 추적하고, AI가 매일 의미 있는 회고록을 작성해주는 오픈소스 데스크톱 앱",
     type: "website",
-    url: "https://github.com/junghwaYang/daily-reflect",
+    url: "https://junghwayang.github.io/daily-reflect/",
   },
 };
 

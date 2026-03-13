@@ -7,7 +7,10 @@ pub async fn push_to_notion(
     database_id: &str,
     content: &str,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
     let date = Local::now().format("%Y-%m-%d").to_string();
 
     let blocks = markdown_to_notion_blocks(content);

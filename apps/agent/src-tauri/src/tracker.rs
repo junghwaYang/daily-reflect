@@ -1,7 +1,6 @@
 use chrono::{Local, NaiveDate, Utc};
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
-use std::process::Command;
 
 const DEFAULT_AW_BASE: &str = "http://127.0.0.1:5600/api/0";
 
@@ -24,50 +23,72 @@ pub struct AwClient {
     base_url: String,
 }
 
-/// Execute curl and return the response body as String
-fn curl_get(url: &str, timeout_secs: u64) -> Result<String, String> {
-    let output = Command::new("/usr/bin/curl")
-        .args([
-            "-s",
-            "-f",
-            "--max-time",
-            &timeout_secs.to_string(),
-            url,
-        ])
-        .output()
-        .map_err(|e| format!("curl 실행 실패: {}", e))?;
+/// Execute HTTP GET and return response body as String
+fn http_get(url: &str, timeout_secs: u64) -> Result<String, String> {
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(timeout_secs))
+        .build()
+        .map_err(|e| format!("HTTP client error: {}", e))?;
 
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("curl 요청 실패 ({}): {}", url, stderr));
+    let response = client
+        .get(url)
+        .send()
+        .map_err(|e| format!("HTTP request failed ({}): {}", url, e))?;
+
+    if !response.status().is_success() {
+        return Err(format!(
+            "HTTP request failed ({}): status {}",
+            url,
+            response.status()
+        ));
     }
 
-    String::from_utf8(output.stdout)
-        .map_err(|e| format!("curl 응답 인코딩 오류: {}", e))
+    response
+        .text()
+        .map_err(|e| format!("HTTP response encoding error: {}", e))
+}
+
+fn validate_aw_api_base(url: &str) -> bool {
+    let normalized = url.trim().to_lowercase();
+    normalized.starts_with("http://localhost")
+        || normalized.starts_with("http://127.0.0.1")
+        || normalized.starts_with("http://[::1]")
+}
+
+fn sanitize_bucket_id(id: &str) -> Result<&str, String> {
+    if id
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '.')
+    {
+        Ok(id)
+    } else {
+        Err(format!("Invalid bucket ID: {}", id))
+    }
 }
 
 impl AwClient {
     pub fn new(base_url: &str) -> Self {
         let url = if base_url.is_empty() {
             DEFAULT_AW_BASE.to_string()
-        } else {
+        } else if validate_aw_api_base(base_url) {
             base_url.trim_end_matches('/').to_string()
+        } else {
+            DEFAULT_AW_BASE.to_string()
         };
         Self { base_url: url }
     }
 
-    /// Check if ActivityWatch is running (sync, uses curl)
+    /// Check if ActivityWatch is running (sync)
     pub fn is_connected(&self) -> bool {
-        curl_get(&format!("{}/buckets/", self.base_url), 3).is_ok()
+        http_get(&format!("{}/buckets/", self.base_url), 3).is_ok()
     }
 
     /// Get bucket IDs matching a keyword (e.g. "window", "afk")
     fn get_bucket_ids(&self, keyword: &str) -> Result<Vec<String>, String> {
-        let body = curl_get(&format!("{}/buckets/", self.base_url), 5)?;
+        let body = http_get(&format!("{}/buckets/", self.base_url), 5)?;
 
-        let buckets: HashMap<String, serde_json::Value> =
-            serde_json::from_str(&body)
-                .map_err(|e| format!("ActivityWatch 응답 파싱 실패: {}", e))?;
+        let buckets: HashMap<String, serde_json::Value> = serde_json::from_str(&body)
+            .map_err(|e| format!("ActivityWatch 응답 파싱 실패: {}", e))?;
 
         Ok(buckets
             .keys()
@@ -83,6 +104,7 @@ impl AwClient {
         start: &str,
         end: &str,
     ) -> Result<Vec<AwEvent>, String> {
+        let bucket_id = sanitize_bucket_id(bucket_id)?;
         // URL-encode timestamps: '+' in RFC3339 (e.g. +00:00) must be %2B
         let enc_start = start.replace('+', "%2B");
         let enc_end = end.replace('+', "%2B");
@@ -90,10 +112,9 @@ impl AwClient {
             "{}/buckets/{}/events?start={}&end={}",
             self.base_url, bucket_id, enc_start, enc_end
         );
-        let body = curl_get(&url, 10)?;
+        let body = http_get(&url, 10)?;
 
-        serde_json::from_str(&body)
-            .map_err(|e| format!("AW 이벤트 파싱 실패: {}", e))
+        serde_json::from_str(&body).map_err(|e| format!("AW 이벤트 파싱 실패: {}", e))
     }
 
     /// Build date range strings for AW API query (local timezone)
@@ -103,15 +124,17 @@ impl AwClient {
         let tz = Local::now().timezone();
         let start = naive
             .and_hms_opt(0, 0, 0)
-            .unwrap()
+            .ok_or("Invalid time")?
             .and_local_timezone(tz)
-            .unwrap()
+            .earliest()
+            .ok_or("Failed to resolve local timezone for start")?
             .with_timezone(&Utc);
         let end = naive
             .and_hms_opt(23, 59, 59)
-            .unwrap()
+            .ok_or("Invalid time")?
             .and_local_timezone(tz)
-            .unwrap()
+            .latest()
+            .ok_or("Failed to resolve local timezone for end")?
             .with_timezone(&Utc);
         Ok((start.to_rfc3339(), end.to_rfc3339()))
     }
@@ -242,11 +265,7 @@ impl AwClient {
         let events: Vec<&AwEvent> = all_events
             .iter()
             .filter(|e| {
-                let app = e
-                    .data
-                    .get("app")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("");
+                let app = e.data.get("app").and_then(|v| v.as_str()).unwrap_or("");
                 !excluded_apps
                     .iter()
                     .any(|ex| app.to_lowercase().contains(&ex.to_lowercase()))
@@ -322,9 +341,25 @@ impl AwClient {
 
         // Build summary text
         let (lbl_date, lbl_active, lbl_idle, lbl_events, lbl_apps, lbl_hourly, lbl_log) = if is_en {
-            ("Date", "Total Active Time", "Idle Time", "Events", "## App Usage & Details", "## Hourly Activity", "## Activity Log")
+            (
+                "Date",
+                "Total Active Time",
+                "Idle Time",
+                "Events",
+                "## App Usage & Details",
+                "## Hourly Activity",
+                "## Activity Log",
+            )
         } else {
-            ("날짜", "총 활동 시간", "유휴 시간", "이벤트 수", "## 앱별 사용 시간 및 상세 활동", "## 시간대별 활동", "## 상세 활동 로그")
+            (
+                "날짜",
+                "총 활동 시간",
+                "유휴 시간",
+                "이벤트 수",
+                "## 앱별 사용 시간 및 상세 활동",
+                "## 시간대별 활동",
+                "## 상세 활동 로그",
+            )
         };
         let (h_unit, m_unit, s_unit) = if is_en {
             ("h", "m", "s")
@@ -355,7 +390,10 @@ impl AwClient {
             let m = (s % 3600) / 60;
             let r = s % 60;
             if h > 0 {
-                summary.push_str(&format!("- {}: {}{} {}{} {}{}\n", app, h, h_unit, m, m_unit, r, s_unit));
+                summary.push_str(&format!(
+                    "- {}: {}{} {}{} {}{}\n",
+                    app, h, h_unit, m, m_unit, r, s_unit
+                ));
             } else if m > 0 {
                 summary.push_str(&format!("- {}: {}{} {}{}\n", app, m, m_unit, r, s_unit));
             } else {
@@ -370,7 +408,10 @@ impl AwClient {
                     let tm = (*t_secs as u64) / 60;
                     let tr = (*t_secs as u64) % 60;
                     if tm > 0 {
-                        summary.push_str(&format!("  · {} ({}{} {}{})\n", title, tm, m_unit, tr, s_unit));
+                        summary.push_str(&format!(
+                            "  · {} ({}{} {}{})\n",
+                            title, tm, m_unit, tr, s_unit
+                        ));
                     } else {
                         summary.push_str(&format!("  · {} ({}{})\n", title, tr, s_unit));
                     }
@@ -384,7 +425,12 @@ impl AwClient {
         hours.sort_by_key(|(h, _)| *h);
         for (hour, entries) in &hours {
             let labels: Vec<&str> = entries.iter().map(|(_, l)| l.as_str()).collect();
-            summary.push_str(&format!("- {:02}{}: {}\n", hour, hour_suffix, labels.join(", ")));
+            summary.push_str(&format!(
+                "- {:02}{}: {}\n",
+                hour,
+                hour_suffix,
+                labels.join(", ")
+            ));
         }
 
         // Raw activity log [App] Title (like ActivityWatch format)

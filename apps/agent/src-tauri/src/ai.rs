@@ -45,11 +45,12 @@ pub async fn generate_retrospective(
 ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
     let prompt = build_prompt(activities, tone, custom_tone, language);
 
-    let client = reqwest::Client::new();
-    let url = format!(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={}",
-        api_key
-    );
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(60))
+        .build()
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
+    let url =
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
     let request = GeminiRequest {
         contents: vec![Content {
@@ -58,7 +59,8 @@ pub async fn generate_retrospective(
     };
 
     let response = client
-        .post(&url)
+        .post(url)
+        .header("x-goog-api-key", api_key)
         .json(&request)
         .send()
         .await?;

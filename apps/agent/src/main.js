@@ -3,6 +3,8 @@ const { listen } = window.__TAURI__.event;
 
 let currentConfig = null;
 let currentLang = 'ko';
+let _statusRefreshTimer = null;
+let _unlistenNavigate = null;
 
 // --- i18n ---
 const i18n = {
@@ -894,20 +896,20 @@ async function saveConfig() {
       currentConfig?.notion_database_id || "";
 
     await invoke("set_config", {
-      geminiApiKey: document.getElementById("gemini-api-key").value.trim() || null,
-      retroTone: document.getElementById("retro-tone").value || null,
-      customTone: document.getElementById("custom-tone").value.trim() || null,
-      retroLanguage: document.getElementById("retro-language").value || null,
-      retroTime: document.getElementById("retro-time").value || null,
+      geminiApiKey: document.getElementById("gemini-api-key").value.trim(),
+      retroTone: document.getElementById("retro-tone").value,
+      customTone: document.getElementById("custom-tone").value.trim(),
+      retroLanguage: document.getElementById("retro-language").value,
+      retroTime: document.getElementById("retro-time").value,
       storageType: null,
       saveLocal: document.getElementById("save-local").checked,
       saveGithub: document.getElementById("save-github").checked,
       saveNotion: document.getElementById("save-notion").checked,
-      localSavePath: document.getElementById("local-save-path").value || null,
+      localSavePath: document.getElementById("local-save-path").value,
       githubToken: null,
       githubOwner: githubOwner || null,
       githubRepo: githubRepo || null,
-      githubFolder: document.getElementById("github-folder").value.trim() || null,
+      githubFolder: document.getElementById("github-folder").value.trim(),
       notionToken: null,
       notionDatabaseId: notionDbId || null,
       excludedApps: null,
@@ -1305,13 +1307,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadRetros();
 
   // Auto-refresh status + activities every 30 seconds
-  setInterval(async () => {
+  _statusRefreshTimer = setInterval(async () => {
     await loadStatus();
     await loadTodayActivities();
   }, 30000);
-});
 
-// Listen for navigation events from tray
-listen("navigate", (event) => {
-  navigateToTab(event.payload);
+  // Cleanup on window unload
+  window.addEventListener('beforeunload', () => {
+    if (_statusRefreshTimer) {
+      clearInterval(_statusRefreshTimer);
+      _statusRefreshTimer = null;
+    }
+    if (_onboardingPollTimer) {
+      clearInterval(_onboardingPollTimer);
+      _onboardingPollTimer = null;
+    }
+    if (_unlistenNavigate) {
+      _unlistenNavigate();
+      _unlistenNavigate = null;
+    }
+  });
+
+  // Listen for navigation events from tray
+  _unlistenNavigate = await listen("navigate", (event) => {
+    navigateToTab(event.payload);
+  });
 });

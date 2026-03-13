@@ -13,6 +13,13 @@ use std::sync::Arc;
 use tauri::{AppHandle, Manager, RunEvent};
 use tracker::AwClient;
 
+fn validate_aw_api_base(url: &str) -> bool {
+    let normalized = url.trim().to_lowercase();
+    normalized.starts_with("http://localhost")
+        || normalized.starts_with("http://127.0.0.1")
+        || normalized.starts_with("http://[::1]")
+}
+
 #[derive(Debug, Clone, Serialize)]
 struct StatusInfo {
     aw_connected: bool,
@@ -152,7 +159,11 @@ fn set_config(
         config.excluded_apps = v;
     }
     if let Some(v) = aw_api_base {
-        config.aw_api_base = v;
+        if v.is_empty() || validate_aw_api_base(&v) {
+            config.aw_api_base = v;
+        } else {
+            return Err("aw_api_base must be a localhost URL".to_string());
+        }
     }
 
     config.save()
@@ -160,6 +171,8 @@ fn set_config(
 
 #[tauri::command]
 fn get_config(state: tauri::State<'_, AppState>) -> Result<AppConfig, String> {
+    // NOTE: Daily Reflect is a local-only desktop app. Returning full config here is intentional
+    // so the settings UI can populate and edit persisted values on the same machine/user context.
     let config = state.config.lock().map_err(|e| e.to_string())?;
     Ok(config.clone())
 }
@@ -248,7 +261,10 @@ async fn open_github_token_page(app: AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 async fn fetch_github_repos(token: String) -> Result<Vec<GitHubRepo>, String> {
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(15))
+        .build()
+        .map_err(|e| e.to_string())?;
     let response = client
         .get("https://api.github.com/user/repos?sort=updated&per_page=30")
         .header("Authorization", format!("Bearer {}", token))
@@ -280,7 +296,10 @@ async fn test_github_connection(
     owner: String,
     repo: String,
 ) -> Result<String, String> {
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(15))
+        .build()
+        .map_err(|e| e.to_string())?;
     let url = format!("https://api.github.com/repos/{}/{}", owner, repo);
     let response = client
         .get(&url)
@@ -315,7 +334,10 @@ async fn open_notion_integration_page(app: AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 async fn fetch_notion_databases(token: String) -> Result<Vec<NotionDatabase>, String> {
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(15))
+        .build()
+        .map_err(|e| e.to_string())?;
     let payload = serde_json::json!({
         "filter": { "property": "object", "value": "database" },
         "page_size": 20
@@ -362,7 +384,10 @@ async fn test_notion_connection(
     token: String,
     database_id: String,
 ) -> Result<String, String> {
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(15))
+        .build()
+        .map_err(|e| e.to_string())?;
     let url = format!("https://api.notion.com/v1/databases/{}", database_id);
     let response = client
         .get(&url)
@@ -494,9 +519,13 @@ pub async fn do_generate_retrospective(
 pub fn run() {
     env_logger::init();
 
-    let buffer = Arc::new(
-        ActivityBuffer::new().expect("Failed to initialize activity buffer"),
-    );
+    let buffer = match ActivityBuffer::new() {
+        Ok(buffer) => Arc::new(buffer),
+        Err(e) => {
+            log::error!("Failed to initialize activity buffer: {}", e);
+            return;
+        }
+    };
 
     let app_state = AppState::new();
     let aw_base = app_state
@@ -506,7 +535,7 @@ pub fn run() {
         .unwrap_or_else(|_| "http://127.0.0.1:5600/api/0".to_string());
     let aw_client = Arc::new(AwClient::new(&aw_base));
 
-    let app = tauri::Builder::default()
+    let app = match tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_autostart::init(
@@ -559,7 +588,13 @@ pub fn run() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("Error while building Tauri application");
+    {
+        Ok(app) => app,
+        Err(e) => {
+            log::error!("Error while building Tauri application: {}", e);
+            return;
+        }
+    };
 
     app.run(|_app_handle, event| {
         if let RunEvent::ExitRequested { api, .. } = event {
