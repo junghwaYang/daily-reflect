@@ -3,35 +3,189 @@ const { listen } = window.__TAURI__.event;
 
 let currentConfig = null;
 
-// --- Tab Navigation ---
+// --- Onboarding ---
+let _onboardingPollTimer = null;
+let _awWasConnected = false;
+
+function detectOS() {
+  const ua = navigator.userAgent;
+  if (ua.includes("Mac")) return "mac";
+  if (ua.includes("Win")) return "windows";
+  return "linux";
+}
+
+function getDownloadUrl() {
+  const os = detectOS();
+  const base = "https://activitywatch.net/downloads/";
+  // Direct to downloads page; OS-specific deep links aren't stable across releases
+  return base;
+}
+
+function getDownloadLabel() {
+  const os = detectOS();
+  if (os === "mac") return "macOS용 ActivityWatch 다운로드";
+  if (os === "windows") return "Windows용 ActivityWatch 다운로드";
+  return "Linux용 ActivityWatch 다운로드";
+}
+
+async function checkAwOnline() {
+  try {
+    const stats = await invoke("get_aw_stats");
+    return stats.aw_connected === true;
+  } catch {
+    return false;
+  }
+}
+
+function showOnboarding() {
+  const screen = document.getElementById("onboarding-screen");
+  const tabBar = document.querySelector(".tab-bar");
+  screen.classList.remove("hidden");
+  if (tabBar) tabBar.style.display = "none";
+
+  // Set OS-specific download label
+  document.getElementById("onboarding-download-label").textContent = getDownloadLabel();
+
+  // Start polling
+  startOnboardingPoll();
+}
+
+function hideOnboarding() {
+  const screen = document.getElementById("onboarding-screen");
+  const tabBar = document.querySelector(".tab-bar");
+  screen.classList.add("hidden");
+  if (tabBar) tabBar.style.display = "";
+  stopOnboardingPoll();
+}
+
+function startOnboardingPoll() {
+  stopOnboardingPoll();
+  _onboardingPollTimer = setInterval(async () => {
+    const online = await checkAwOnline();
+    if (online) {
+      const dot = document.getElementById("onboarding-polling-dot");
+      const statusEl = document.getElementById("onboarding-polling-status");
+      if (dot) dot.classList.add("connected");
+      if (statusEl) statusEl.querySelector("span").textContent = "ActivityWatch 연결됨!";
+      stopOnboardingPoll();
+      setTimeout(() => {
+        hideOnboarding();
+        _awWasConnected = true;
+        loadAwStats();
+      }, 800);
+    }
+  }, 3000);
+}
+
+function stopOnboardingPoll() {
+  if (_onboardingPollTimer) {
+    clearInterval(_onboardingPollTimer);
+    _onboardingPollTimer = null;
+  }
+}
+
+async function initOnboarding() {
+  const online = await checkAwOnline();
+  if (!online) {
+    showOnboarding();
+  } else {
+    _awWasConnected = true;
+  }
+}
+
+function initOnboardingEvents() {
+  // Download button — open AW downloads page in system browser
+  document.getElementById("onboarding-download-btn").addEventListener("click", async () => {
+    const url = getDownloadUrl();
+    // Try Tauri shell plugin JS API (available if plugin is initialized with JS bindings)
+    try {
+      const shellModule = window.__TAURI__?.shell;
+      if (shellModule?.open) {
+        await shellModule.open(url);
+        return;
+      }
+    } catch { /* fall through */ }
+    // Fallback: invoke existing open-URL pattern via shell
+    try {
+      // Use the open_github_token_page trick: invoke a known open command isn't feasible,
+      // so we rely on the Tauri webview treating window.open as external link
+      window.open(url, "_blank");
+    } catch { /* ignore */ }
+  });
+
+  // Manual check button
+  document.getElementById("onboarding-check-btn").addEventListener("click", async () => {
+    const btn = document.getElementById("onboarding-check-btn");
+    const statusEl = document.getElementById("onboarding-polling-status");
+    btn.disabled = true;
+    btn.textContent = "확인 중...";
+
+    const online = await checkAwOnline();
+    if (online) {
+      const dot = statusEl.querySelector(".onboarding-polling-dot");
+      if (dot) dot.classList.add("connected");
+      statusEl.querySelector("span").textContent = "ActivityWatch 연결됨!";
+      stopOnboardingPoll();
+      setTimeout(() => {
+        hideOnboarding();
+        _awWasConnected = true;
+        loadAwStats();
+      }, 800);
+    } else {
+      statusEl.querySelector("span").textContent = "아직 연결되지 않았습니다";
+      btn.disabled = false;
+      btn.textContent = "연결 확인";
+    }
+  });
+
+  // Banner "설정 보기" button
+  const bannerSetupBtn = document.getElementById("aw-banner-setup-btn");
+  if (bannerSetupBtn) {
+    bannerSetupBtn.addEventListener("click", () => {
+      navigateToTab("settings");
+      // Push into data source detail
+      document.getElementById("settings-main").classList.remove("active");
+      document.getElementById("settings-detail-data").classList.add("active");
+      checkAwConnection();
+    });
+  }
+}
+
+// --- Icon Navigation ---
 function initTabs() {
-  document.querySelectorAll(".tab").forEach((tab) => {
-    tab.addEventListener("click", () => {
-      const target = tab.dataset.tab;
-      document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
-      document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
-      tab.classList.add("active");
-      document.getElementById("tab-" + target).classList.add("active");
-
-      if (target !== "settings") {
-        document.querySelectorAll(".settings-detail").forEach((d) => d.classList.remove("active"));
-        const settingsMain = document.getElementById("settings-main");
-        if (settingsMain) settingsMain.style.display = "";
-      }
-
-      if (target !== "retros") {
-        const retroDetail = document.getElementById("retro-detail");
-        if (retroDetail) retroDetail.classList.remove("active");
-        const retroMain = document.getElementById("retro-main");
-        if (retroMain) retroMain.style.display = "";
-      }
+  document.querySelectorAll(".tab-bar-item[data-nav]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      navigateToTab(btn.dataset.nav);
     });
   });
 }
 
 function navigateToTab(tabName) {
-  const tab = document.querySelector(`.tab[data-tab="${tabName}"]`);
-  if (tab) tab.click();
+  // Update active icon
+  document.querySelectorAll(".tab-bar-item[data-nav]").forEach((b) => b.classList.remove("active"));
+  const activeBtn = document.querySelector(`.tab-bar-item[data-nav="${tabName}"]`);
+  if (activeBtn) activeBtn.classList.add("active");
+
+  // Switch tab content
+  document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
+  const target = document.getElementById("tab-" + tabName);
+  if (target) target.classList.add("active");
+
+  // Reset sub-views
+  if (tabName === "settings") {
+    // Show settings main panel
+    document.querySelectorAll(".settings-detail").forEach((d) => d.classList.remove("active"));
+    document.getElementById("settings-main").classList.add("active");
+  } else {
+    document.querySelectorAll(".view-panel").forEach((p) => p.classList.remove("active"));
+    document.getElementById("settings-main").classList.add("active");
+  }
+  if (tabName !== "retros") {
+    const retroDetail = document.getElementById("retro-detail");
+    if (retroDetail) retroDetail.classList.remove("active");
+    const retroMain = document.getElementById("retro-main");
+    if (retroMain) retroMain.style.display = "";
+  }
 }
 
 // --- Status ---
@@ -60,14 +214,20 @@ async function loadAwStats() {
       trackingDot.className = "hero-status-dot active";
       trackingText.textContent = "ActivityWatch 연결됨";
       awSub.textContent = "활동 데이터를 가져오고 있습니다";
+      _awWasConnected = true;
+      hideBanner();
     } else {
       trackingDot.className = "hero-status-dot paused";
       trackingText.textContent = "ActivityWatch 미연결";
       awSub.textContent = "ActivityWatch를 실행해주세요";
+      // If AW was previously connected and is now gone, show subtle banner (not full onboarding)
+      if (_awWasConnected) {
+        showBanner();
+      }
     }
 
-    const activeMinutes = stats.today_active_minutes || 0;
-    const idleMinutes = stats.today_idle_minutes || 0;
+    const activeMinutes = stats.active_minutes || 0;
+    const idleMinutes = stats.idle_minutes || 0;
     const activeHours = Math.floor(activeMinutes / 60);
     const activeRemainingMins = activeMinutes % 60;
     const idleHours = Math.floor(idleMinutes / 60);
@@ -85,13 +245,24 @@ async function loadAwStats() {
       todayIdleTime.textContent = `${idleRemainingMins}분`;
     }
 
-    todayCount.textContent = stats.today_count.toLocaleString();
+    todayCount.textContent = (stats.event_count || 0).toLocaleString();
   } catch (e) {
     console.error("Failed to load AW stats:", e);
     if (trackingDot) trackingDot.className = "hero-status-dot paused";
     if (trackingText) trackingText.textContent = "AW 연결 실패";
     if (awSub) awSub.textContent = e.toString();
   }
+}
+
+// --- AW Disconnect Banner ---
+function showBanner() {
+  const banner = document.getElementById("aw-disconnect-banner");
+  if (banner) banner.classList.remove("hidden");
+}
+
+function hideBanner() {
+  const banner = document.getElementById("aw-disconnect-banner");
+  if (banner) banner.classList.add("hidden");
 }
 
 // --- Config ---
@@ -415,23 +586,24 @@ function showToast() {
 
 // --- Settings Navigation ---
 function initSettingsNav() {
+  // Settings card → push detail view
   document.querySelectorAll(".settings-card").forEach((card) => {
     card.addEventListener("click", () => {
       const detailId = "settings-detail-" + card.dataset.detail;
-      document.getElementById("settings-main").style.display = "none";
+      document.getElementById("settings-main").classList.remove("active");
       document.getElementById(detailId).classList.add("active");
 
-      // Check AW connection when entering data source settings
       if (card.dataset.detail === "data") {
         checkAwConnection();
       }
     });
   });
 
-  document.querySelectorAll(".detail-back-btn").forEach((btn) => {
+  // Back buttons → pop to settings main
+  document.querySelectorAll(".nav-back-btn[data-back]").forEach((btn) => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".settings-detail").forEach((d) => d.classList.remove("active"));
-      document.getElementById("settings-main").style.display = "";
+      document.getElementById("settings-main").classList.add("active");
       updateSettingsSummaries();
     });
   });
@@ -761,6 +933,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   initTabs();
   initSettingsNav();
   initCollapsible();
+  initOnboardingEvents();
+
+  // Check AW before loading everything else
+  await initOnboarding();
+
   await loadStatus();
   await loadConfig();
   updateSettingsSummaries();
@@ -771,55 +948,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   setInterval(async () => {
     await loadStatus();
     await loadTodayActivities();
-  }, 30000);
-});
-
-// Listen for navigation events from tray
-listen("navigate", (event) => {
-  navigateToTab(event.payload);
-});
-ror(e); }
-});
-document.getElementById("notion-connect-btn").addEventListener("click", connectNotion);
-document.getElementById("notion-disconnect-btn").addEventListener("click", disconnectNotion);
-document.getElementById("notion-test-btn").addEventListener("click", testNotion);
-
-// Auto-save on all settings inputs
-document.getElementById("gemini-api-key").addEventListener("input", debouncedSaveConfig);
-document.getElementById("retro-tone").addEventListener("change", () => {
-  toggleCustomTone();
-  debouncedSaveConfig();
-});
-document.getElementById("custom-tone").addEventListener("input", debouncedSaveConfig);
-document.getElementById("retro-language").addEventListener("change", debouncedSaveConfig);
-document.getElementById("retro-time").addEventListener("change", debouncedSaveConfig);
-document.getElementById("save-local").addEventListener("change", () => {
-  const localDetail = document.getElementById("local-detail");
-  if (localDetail) localDetail.style.display = document.getElementById("save-local").checked ? "" : "none";
-  debouncedSaveConfig();
-});
-document.getElementById("save-github").addEventListener("change", debouncedSaveConfig);
-document.getElementById("save-notion").addEventListener("change", debouncedSaveConfig);
-document.getElementById("notion-db-select").addEventListener("change", debouncedSaveConfig);
-document.getElementById("idle-threshold").addEventListener("input", debouncedSaveConfig);
-
-// --- Init ---
-document.addEventListener("DOMContentLoaded", async () => {
-  initTabs();
-  initSettingsNav();
-  initCollapsible();
-  await loadStatus();
-  await loadConfig();
-  updateSettingsSummaries();
-  await loadTodayActivities();
-  await loadRecentActivities();
-  await loadRetros();
-
-  // Auto-refresh status + activities every 30 seconds
-  setInterval(async () => {
-    await loadStatus();
-    await loadTodayActivities();
-    await loadRecentActivities();
   }, 30000);
 });
 

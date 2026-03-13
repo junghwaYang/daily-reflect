@@ -588,7 +588,7 @@ async fn retro_schedule_loop(handle: tauri::AppHandle, buffer: Arc<ActivityBuffe
         let current_time = now.format("%H:%M").to_string();
         let current_date = now.format("%Y-%m-%d").to_string();
 
-        if current_time == config.retro_time && last_generated_date != current_date {
+        if current_time >= config.retro_time && last_generated_date != current_date {
             log::info!("스케줄된 회고글 생성 시작: {}", current_date);
 
             let aw = handle.state::<Arc<AwClient>>();
