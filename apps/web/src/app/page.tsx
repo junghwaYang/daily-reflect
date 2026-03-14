@@ -56,7 +56,7 @@ function IconCheck() {
 }
 
 // ─── Release Fetcher ───
-type DownloadURLs = { macOS?: string; Windows?: string; Linux?: string; macOSFix?: string; version?: string };
+type DownloadURLs = { macOS?: string; Windows?: string; Linux?: string; version?: string };
 
 function useLatestRelease() {
   const [downloads, setDownloads] = useState<DownloadURLs>({});
@@ -69,7 +69,6 @@ function useLatestRelease() {
           if (a.name.endsWith(".dmg")) urls.macOS = a.browser_download_url;
           else if (a.name.endsWith("-setup.exe")) urls.Windows = a.browser_download_url;
           else if (a.name.endsWith(".AppImage")) urls.Linux = a.browser_download_url;
-          else if (a.name.endsWith(".command")) urls.macOSFix = a.browser_download_url;
         }
         setDownloads(urls);
       })
@@ -318,25 +317,19 @@ export default function Home() {
                 const url = release[platform];
                 const isCurrentOS = os === platform;
                 return (
-                  <div key={platform} className="flex flex-col gap-1">
-                    <a
-                      href={url ?? RELEASES_URL}
-                      {...(url ? {} : { target: "_blank", rel: "noopener noreferrer" })}
-                      className={`inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors ${
-                        isCurrentOS
-                          ? "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
-                          : "border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900"
-                      }`}
-                    >
-                      {platform}
-                      <span className="text-xs opacity-60">{t.download.osLabels[platform]}</span>
-                    </a>
-                    {platform === "macOS" && release.macOSFix && (
-                      <a href={release.macOSFix} className="text-center text-[11px] text-zinc-400 underline hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300">
-                        {locale === "ko" ? "설치 도우미 (필수)" : "Install Helper (required)"}
-                      </a>
-                    )}
-                  </div>
+                  <a
+                    key={platform}
+                    href={url ?? RELEASES_URL}
+                    {...(url ? {} : { target: "_blank", rel: "noopener noreferrer" })}
+                    className={`inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors ${
+                      isCurrentOS
+                        ? "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                        : "border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                    }`}
+                  >
+                    {platform}
+                    <span className="text-xs opacity-60">{t.download.osLabels[platform]}</span>
+                  </a>
                 );
               })}
             </div>

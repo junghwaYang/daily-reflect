@@ -55,11 +55,17 @@ Download the file for your OS from the [latest release](https://github.com/jungh
 
 #### macOS First Launch
 
-Since Daily Reflect is not notarized with Apple, macOS Gatekeeper will block it on first launch.
+Since Daily Reflect is not notarized with Apple, macOS Gatekeeper will block it on first launch. Use either method:
 
-1. Download `fix-macos.command` from the [release page](https://github.com/junghwaYang/daily-reflect/releases/latest) alongside the `.dmg`
-2. Install the app from `.dmg` (drag to Applications)
-3. Double-click `fix-macos.command` — it will remove the restriction and launch the app
+**Method 1 — Terminal (recommended):**
+```bash
+xattr -cr /Applications/Daily\ Reflect.app
+```
+
+**Method 2 — System Settings:**
+1. Open **System Settings → Privacy & Security**
+2. Scroll down to find the blocked app message
+3. Click **Open Anyway** and enter your password
 
 #### Windows First Launch
 
