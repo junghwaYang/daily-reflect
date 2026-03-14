@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { translations, detectLocale, type Locale } from "@/lib/i18n";
+import { SiteHeader, SiteFooter } from "../shared";
 
 const REPO = "junghwaYang/daily-reflect";
 const API_URL = `https://api.github.com/repos/${REPO}/releases`;
@@ -42,6 +43,8 @@ export default function ChangelogPage() {
   const [releases, setReleases] = useState<Release[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDark, setIsDark] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   const t = translations[locale];
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "/daily-reflect";
@@ -57,11 +60,16 @@ export default function ChangelogPage() {
       document.documentElement.classList.add("dark");
     }
 
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", onScroll, { passive: true });
+
     fetch(API_URL)
       .then((r) => (r.ok ? r.json() : []))
       .then((data: Release[]) => setReleases(data))
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const toggleLocale = useCallback(() => setLocale((l) => (l === "ko" ? "en" : "ko")), []);
@@ -74,28 +82,9 @@ export default function ChangelogPage() {
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
-      <header className="border-b border-zinc-200 bg-white/80 backdrop-blur-lg dark:border-zinc-800 dark:bg-zinc-950/80">
-        <div className="mx-auto flex h-14 max-w-[860px] items-center justify-between px-6">
-          <a href={basePath} className="flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="m15 18-6-6 6-6"/></svg>
-            {t.changelog.back}
-          </a>
-          <div className="flex items-center gap-1">
-            <button type="button" onClick={toggleLocale} className="rounded-md px-2.5 py-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50">
-              {t.nav.langToggle}
-            </button>
-            <button type="button" onClick={toggleDark} className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50" aria-label="Toggle theme">
-              {isDark ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
+      <SiteHeader t={t} basePath={basePath} scrolled={scrolled} isDark={isDark} mobileMenuOpen={mobileMenuOpen} toggleLocale={toggleLocale} toggleDark={toggleDark} setMobileMenuOpen={setMobileMenuOpen} />
 
-      <main className="mx-auto max-w-[860px] px-6 py-16">
+      <main className="mx-auto max-w-[860px] px-6 py-16 pt-28">
         <h1 className="text-3xl font-bold tracking-tight">{t.changelog.title}</h1>
         <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">{t.changelog.subtitle}</p>
 
@@ -164,6 +153,8 @@ export default function ChangelogPage() {
           })}
         </div>
       </main>
+
+      <SiteFooter t={t} basePath={basePath} />
     </div>
   );
 }
