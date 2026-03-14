@@ -174,6 +174,35 @@ export default function Home() {
               {t.hero.github}
             </a>
           </div>
+
+          <div className="mx-auto mt-6 max-w-[640px] rounded-xl border border-amber-200 bg-amber-50/80 p-4 text-left shadow-sm dark:border-amber-900/60 dark:bg-amber-950/20">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 9v4" />
+                  <path d="M12 17h.01" />
+                  <path d="m10.29 3.86-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.71-3.14l-8-14a2 2 0 0 0-3.42 0z" />
+                </svg>
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">{t.download.postInstallTitle}</p>
+                <p className="mt-1 text-xs leading-relaxed text-amber-800/90 dark:text-amber-300/90">{t.download.postInstallIntro}</p>
+              </div>
+            </div>
+
+            <div className="mt-3 space-y-2">
+              <div className="rounded-lg border border-amber-200/80 bg-white/70 p-3 dark:border-amber-900/50 dark:bg-zinc-950/40">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">{t.download.macosTerminalLabel}</p>
+                <code className="mt-1 block rounded bg-zinc-900 px-2 py-1 text-[11px] text-zinc-100">{t.download.macosTerminalCommand}</code>
+                <p className="mt-2 text-[11px] leading-relaxed text-zinc-600 dark:text-zinc-300">{t.download.macosSettingsLabel}: {t.download.macosSettingsPath}</p>
+              </div>
+
+              <div className="rounded-lg border border-amber-200/80 bg-white/70 p-3 dark:border-amber-900/50 dark:bg-zinc-950/40">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">{t.download.windowsActionLabel}</p>
+                <p className="mt-1 text-[11px] leading-relaxed text-zinc-600 dark:text-zinc-300">{t.download.windowsActionPath}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Bottom fade */}
@@ -344,13 +373,22 @@ export default function Home() {
             </div>
           )}
 
-          <div className="mt-5 space-y-1.5 text-left">
-            <p className="text-[11px] leading-relaxed text-zinc-400 dark:text-zinc-500">
-              ⚠ {t.download.macosWarning}
-            </p>
-            <p className="text-[11px] leading-relaxed text-zinc-400 dark:text-zinc-500">
-              ⚠ {t.download.windowsWarning}
-            </p>
+          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50/80 p-4 text-left dark:border-amber-900/60 dark:bg-amber-950/20">
+            <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">{t.download.postInstallTitle}</p>
+            <p className="mt-1 text-xs leading-relaxed text-amber-800/90 dark:text-amber-300/90">{t.download.postInstallIntro}</p>
+
+            <div className="mt-3 space-y-2">
+              <div className="rounded-lg border border-amber-200/80 bg-white/70 p-3 dark:border-amber-900/50 dark:bg-zinc-950/40">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">{t.download.macosTerminalLabel}</p>
+                <code className="mt-1 block rounded bg-zinc-900 px-2 py-1 text-[11px] text-zinc-100">{t.download.macosTerminalCommand}</code>
+                <p className="mt-2 text-[11px] leading-relaxed text-zinc-600 dark:text-zinc-300">{t.download.macosSettingsLabel}: {t.download.macosSettingsPath}</p>
+              </div>
+
+              <div className="rounded-lg border border-amber-200/80 bg-white/70 p-3 dark:border-amber-900/50 dark:bg-zinc-950/40">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">{t.download.windowsActionLabel}</p>
+                <p className="mt-1 text-[11px] leading-relaxed text-zinc-600 dark:text-zinc-300">{t.download.windowsActionPath}</p>
+              </div>
+            </div>
           </div>
 
           <div className="mt-4 flex items-center justify-center">
