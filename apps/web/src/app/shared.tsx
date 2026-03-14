@@ -1,6 +1,6 @@
 "use client";
 
-import type { Dispatch, SetStateAction } from "react";
+import { useState, useEffect, type Dispatch, type SetStateAction } from "react";
 
 type Translations = { nav: { howItWorks: string; features: string; privacy: string; download: string; guide: string; changelog: string; langToggle: string }; footer: { madeBy: string; license: string; openSource: string } };
 
@@ -15,8 +15,11 @@ function IconGithub({ size = 16 }: { size?: number }) {
 const GITHUB_URL = "https://github.com/junghwaYang/daily-reflect";
 
 function useCurrentPath() {
-  if (typeof window === "undefined") return "/";
-  return window.location.pathname;
+  const [path, setPath] = useState("/");
+  useEffect(() => {
+    setPath(window.location.pathname);
+  }, []);
+  return path;
 }
 
 function isActive(href: string, currentPath: string): boolean {
