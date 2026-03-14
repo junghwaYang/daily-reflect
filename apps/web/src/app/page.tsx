@@ -149,6 +149,8 @@ export default function Home() {
               { href: "#how-it-works", label: t.nav.howItWorks },
               { href: "#features", label: t.nav.features },
               { href: "#privacy", label: t.nav.privacy },
+              { href: `${basePath}/guide/`, label: t.nav.guide },
+              { href: `${basePath}/changelog/`, label: t.nav.changelog },
             ].map(({ href, label }) => (
               <a key={href} href={href} className="rounded-md px-3 py-1.5 text-sm text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50">
                 {label}
@@ -186,6 +188,8 @@ export default function Home() {
                 { href: "#features", label: t.nav.features },
                 { href: "#privacy", label: t.nav.privacy },
                 { href: "#download", label: t.nav.download },
+                { href: `${basePath}/guide/`, label: t.nav.guide },
+                { href: `${basePath}/changelog/`, label: t.nav.changelog },
               ].map(({ href, label }) => (
                 <a key={href} href={href} onClick={() => setMobileMenuOpen(false)} className="rounded-md px-3 py-2 text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50">{label}</a>
               ))}
