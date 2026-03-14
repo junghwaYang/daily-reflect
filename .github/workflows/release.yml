@@ -49,13 +49,6 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Upload macOS fix script
-        if: matrix.platform == 'macos-latest'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload "${{ github.ref_name }}" scripts/fix-macos.command --clobber
-
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
@@ -72,3 +65,10 @@ jobs:
           includeUpdaterJson: true
           projectPath: apps/agent
           args: ${{ matrix.args }}
+
+      - name: Upload macOS fix script
+        if: matrix.platform == 'macos-latest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.ref_name }}" scripts/fix-macos.command --clobber
