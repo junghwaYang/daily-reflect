@@ -636,12 +636,10 @@ async fn check_for_updates(handle: AppHandle) -> Result<(), Box<dyn std::error::
 
     if let Some(update) = response {
         log::info!("Update available: {}", update.version);
-        handle.emit("update-available", &update.version)?;
 
         match update.download_and_install(|_, _| {}, || {}).await {
             Ok(_) => {
                 log::info!("Update installed, will apply on next restart");
-                handle.emit("update-installed", ())?;
             }
             Err(e) => {
                 log::error!("Update install failed: {}", e);
