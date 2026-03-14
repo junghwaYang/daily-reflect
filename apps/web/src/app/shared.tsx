@@ -14,10 +14,24 @@ function IconGithub({ size = 16 }: { size?: number }) {
 
 const GITHUB_URL = "https://github.com/junghwaYang/daily-reflect";
 
+function useCurrentPath() {
+  if (typeof window === "undefined") return "/";
+  return window.location.pathname;
+}
+
+function isActive(href: string, currentPath: string): boolean {
+  if (href.includes("#")) return false;
+  const normalized = currentPath.replace(/\/$/, "");
+  const hrefNormalized = href.replace(/\/$/, "");
+  return normalized === hrefNormalized;
+}
+
 export function SiteHeader({ t, basePath, scrolled, isDark, mobileMenuOpen, toggleLocale, toggleDark, setMobileMenuOpen }: {
   t: Translations; basePath: string; scrolled: boolean; isDark: boolean; mobileMenuOpen: boolean;
   toggleLocale: () => void; toggleDark: () => void; setMobileMenuOpen: Dispatch<SetStateAction<boolean>>;
 }) {
+  const currentPath = useCurrentPath();
+
   const navItems = [
     { href: `${basePath}/#how-it-works`, label: t.nav.howItWorks },
     { href: `${basePath}/#features`, label: t.nav.features },
@@ -42,11 +56,18 @@ export function SiteHeader({ t, basePath, scrolled, isDark, mobileMenuOpen, togg
         </a>
 
         <nav className="hidden items-center gap-1 md:flex">
-          {navItems.map(({ href, label }) => (
-            <a key={href} href={href} className="rounded-md px-3 py-1.5 text-sm text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50">
-              {label}
-            </a>
-          ))}
+          {navItems.map(({ href, label }) => {
+            const active = isActive(href, currentPath);
+            return (
+              <a key={href} href={href} className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+                active
+                  ? "font-medium text-zinc-900 dark:text-zinc-50"
+                  : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+              }`}>
+                {label}
+              </a>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-1">
@@ -74,9 +95,16 @@ export function SiteHeader({ t, basePath, scrolled, isDark, mobileMenuOpen, togg
       {mobileMenuOpen && (
         <div className="border-t border-zinc-200 bg-white px-6 py-3 dark:border-zinc-800 dark:bg-zinc-950 md:hidden">
           <nav className="flex flex-col gap-1">
-            {navItems.map(({ href, label }) => (
-              <a key={href} href={href} onClick={() => setMobileMenuOpen(false)} className="rounded-md px-3 py-2 text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50">{label}</a>
-            ))}
+            {navItems.map(({ href, label }) => {
+              const active = isActive(href, currentPath);
+              return (
+                <a key={href} href={href} onClick={() => setMobileMenuOpen(false)} className={`rounded-md px-3 py-2 text-sm ${
+                  active
+                    ? "font-medium text-zinc-900 dark:text-zinc-50"
+                    : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                }`}>{label}</a>
+              );
+            })}
           </nav>
         </div>
       )}
