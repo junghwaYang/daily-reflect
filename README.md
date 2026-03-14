@@ -20,7 +20,7 @@ Based on activity data collected by [ActivityWatch](https://activitywatch.net/),
 
 | Status | Reflection | Settings |
 |:---:|:---:|:---:|
-| Real-time display of active time and event count | List of AI-generated reflections | AI, storage, and data source configuration |
+| ![Status](docs/screenshots/screenshot-status.png) | ![Reflection](docs/screenshots/screenshot-retro.png) | ![Settings](docs/screenshots/screenshot-settings.png) |
 
 ## Getting Started
 
@@ -128,6 +128,7 @@ daily-reflect/
 │   │   │   └── styles.css
 │   │   └── src-tauri/          # Backend (Rust)
 │   │       └── src/
+│   │           ├── main.rs     # Tauri entry point
 │   │           ├── lib.rs      # Main app logic, commands, scheduler
 │   │           ├── tracker.rs  # ActivityWatch API client
 │   │           ├── ai.rs       # Gemini AI integration
@@ -137,9 +138,11 @@ daily-reflect/
 │   │           ├── notion.rs   # Notion API integration
 │   │           └── tray.rs     # System tray menu
 │   └── web/                    # Landing page (Next.js)
+├── docs/                       # Documentation and screenshots
 ├── packages/
 │   └── shared/                 # Shared types/constants
 ├── supabase/                   # DB schema and seeds
+├── .github/workflows/          # CI/CD (GitHub Pages deploy)
 ├── turbo.json
 ├── pnpm-workspace.yaml
 └── package.json
@@ -156,7 +159,7 @@ daily-reflect/
 | Activity Tracking | ActivityWatch API |
 | Local DB | SQLite (rusqlite) |
 | External Storage | GitHub API, Notion API |
-| Web | Next.js 16, React 19 |
+| Web | Next.js 16, React 19, Tailwind CSS 4, shadcn/ui |
 | DB | Supabase (PostgreSQL) |
 | Build | pnpm + Turborepo |
 
@@ -166,6 +169,14 @@ daily-reflect/
 - ActivityWatch data is accessed exclusively from `localhost:5600`
 - Activity summaries are sent to the Gemini API only when generating a reflection
 - GitHub/Notion storage operates only when explicitly enabled by the user
+
+## Deployment
+
+The landing page is automatically deployed to **GitHub Pages** when changes are pushed to the `main` branch under `apps/web/`.
+
+- **URL**: [https://junghwayang.github.io/daily-reflect](https://junghwayang.github.io/daily-reflect)
+- **Workflow**: `.github/workflows/deploy-web.yml`
+- **Trigger**: Push to `main` (paths: `apps/web/**`)
 
 ## License
 
