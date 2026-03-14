@@ -48,6 +48,20 @@ export default function GuidePage() {
         <h1 className="text-3xl font-bold tracking-tight">{g.title}</h1>
         <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">{g.subtitle}</p>
 
+        <section className="mt-6 rounded-xl border border-amber-200 bg-amber-50/80 p-5 dark:border-amber-900/60 dark:bg-amber-950/20">
+          <h2 className="text-sm font-semibold text-amber-900 dark:text-amber-200">{g.quickStartTitle}</h2>
+          <ol className="mt-3 space-y-2">
+            {g.quickStartItems.map((item, i) => (
+              <li key={item} className="flex gap-2.5 text-sm text-amber-900/90 dark:text-amber-200/90">
+                <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-200/60 text-[11px] font-semibold text-amber-900 dark:bg-amber-800/60 dark:text-amber-100">
+                  {i + 1}
+                </span>
+                {item}
+              </li>
+            ))}
+          </ol>
+        </section>
+
         {/* TOC */}
         <nav className="mt-10 rounded-xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-900">
           <h2 className="mb-3 text-sm font-semibold">{g.toc}</h2>
