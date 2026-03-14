@@ -592,6 +592,21 @@ pub fn run() {
                 tray.on_menu_event(move |_app, event| {
                     tray::handle_tray_menu_event(&tray_handle, event.id().as_ref());
                 });
+                tray.on_tray_icon_event(|tray, event| {
+                    if let tauri::tray::TrayIconEvent::Click {
+                        button: tauri::tray::MouseButton::Left,
+                        button_state: tauri::tray::MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        let app = tray.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.unminimize();
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                });
             }
 
             // Check for app updates in background
@@ -611,6 +626,12 @@ pub fn run() {
 
             Ok(())
         })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+            }
+        })
         .build(tauri::generate_context!())
     {
         Ok(app) => app,
@@ -620,9 +641,20 @@ pub fn run() {
         }
     };
 
-    app.run(|_app_handle, event| {
-        if let RunEvent::ExitRequested { api, .. } = event {
-            api.prevent_exit();
+    app.run(|app_handle, event| {
+        match event {
+            RunEvent::ExitRequested { api, .. } => {
+                api.prevent_exit();
+            }
+            #[cfg(target_os = "macos")]
+            RunEvent::Reopen { .. } => {
+                if let Some(window) = app_handle.get_webview_window("main") {
+                    let _ = window.unminimize();
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+            }
+            _ => {}
         }
     });
 }
