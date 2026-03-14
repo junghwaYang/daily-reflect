@@ -344,6 +344,15 @@ export default function Home() {
             </div>
           )}
 
+          <div className="mt-5 space-y-1.5 text-left">
+            <p className="text-[11px] leading-relaxed text-zinc-400 dark:text-zinc-500">
+              ⚠ {t.download.macosWarning}
+            </p>
+            <p className="text-[11px] leading-relaxed text-zinc-400 dark:text-zinc-500">
+              ⚠ {t.download.windowsWarning}
+            </p>
+          </div>
+
           <div className="mt-4 flex items-center justify-center">
             <a href={RELEASES_URL} target="_blank" rel="noopener noreferrer" className="text-xs text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300">
               {t.download.allDownloads} {release.version && `(${release.version})`} →

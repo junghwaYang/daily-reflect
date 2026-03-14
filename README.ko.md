@@ -55,13 +55,17 @@ Daily Reflect는 활동 데이터 수집을 위해 [ActivityWatch](https://activ
 
 #### macOS 첫 실행
 
-Daily Reflect는 Apple 공증을 받지 않은 앱이라 macOS Gatekeeper가 첫 실행을 차단할 수 있습니다.
+Daily Reflect는 Apple 공증을 받지 않은 앱이라 macOS Gatekeeper가 첫 실행을 차단합니다. 설치 후 터미널에서 아래 명령어를 실행하세요:
 
-1. **시스템 설정 → 개인 정보 보호 및 보안** 열기
-2. 아래로 스크롤하여 "Daily Reflect" 관련 메시지 확인
-3. **확인 없이 열기** 클릭
+```bash
+xattr -cr /Applications/Daily\ Reflect.app
+```
 
-또는 앱을 우클릭 → **열기** → 확인 대화상자에서 **열기** 클릭.
+이후 정상적으로 앱을 실행할 수 있습니다.
+
+#### Windows 첫 실행
+
+Windows SmartScreen 경고가 나타날 수 있습니다. **추가 정보** → **실행** 을 클릭하세요.
 
 #### 소스에서 빌드
 
