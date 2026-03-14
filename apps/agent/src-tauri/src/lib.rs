@@ -12,6 +12,7 @@ use config::{AppConfig, AppState};
 use serde::Serialize;
 use std::sync::Arc;
 use tauri::{AppHandle, Manager, RunEvent};
+use tauri_plugin_updater::UpdaterExt;
 use tracker::AwClient;
 
 fn validate_aw_api_base(url: &str) -> bool {
@@ -552,6 +553,7 @@ pub fn run() {
     let app = match tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
@@ -592,6 +594,14 @@ pub fn run() {
                 });
             }
 
+            // Check for app updates in background
+            let update_handle = handle.clone();
+            tauri::async_runtime::spawn(async move {
+                if let Err(e) = check_for_updates(update_handle).await {
+                    log::warn!("Update check failed: {}", e);
+                }
+            });
+
             // Start daily retrospective generation task
             let retro_handle = handle.clone();
             let retro_buffer = buffer.clone();
@@ -618,6 +628,30 @@ pub fn run() {
 }
 
 /// Scheduled retrospective generation loop
+async fn check_for_updates(handle: AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+
+    let updater = handle.updater()?;
+    let response = updater.check().await?;
+
+    if let Some(update) = response {
+        log::info!("Update available: {}", update.version);
+        handle.emit("update-available", &update.version)?;
+
+        match update.download_and_install(|_, _| {}, || {}).await {
+            Ok(_) => {
+                log::info!("Update installed, will apply on next restart");
+                handle.emit("update-installed", ())?;
+            }
+            Err(e) => {
+                log::error!("Update install failed: {}", e);
+            }
+        }
+    }
+
+    Ok(())
+}
+
 async fn retro_schedule_loop(handle: tauri::AppHandle, buffer: Arc<ActivityBuffer>) {
     use chrono::Local;
 

@@ -48,10 +48,20 @@ Download the file for your OS from the [latest release](https://github.com/jungh
 
 | OS | File | Notes |
 |---|---|---|
-| **macOS** | `Daily_Reflect_x.x.x_universal.dmg` | Intel & Apple Silicon |
+| **macOS** | `Daily_Reflect_x.x.x_universal.dmg` | Intel & Apple Silicon ([설치 안내](#macos-first-launch)) |
 | **Windows** | `Daily_Reflect_x.x.x_x64-setup.exe` | Installer (recommended) |
 | **Linux** | `Daily_Reflect_x.x.x_amd64.AppImage` | No install needed, just run |
 | **Linux (Debian/Ubuntu)** | `Daily_Reflect_x.x.x_amd64.deb` | `sudo dpkg -i *.deb` |
+
+#### macOS First Launch
+
+Since Daily Reflect is not notarized with Apple, macOS Gatekeeper may block it on first launch.
+
+1. Open **System Settings → Privacy & Security**
+2. Scroll down to find the message about "Daily Reflect"
+3. Click **Open Anyway**
+
+Alternatively, right-click the app → **Open** → **Open** in the confirmation dialog.
 
 #### Build from Source
 

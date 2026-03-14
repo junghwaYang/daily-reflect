@@ -31,9 +31,18 @@
       "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
     }
   },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/junghwaYang/daily-reflect/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDk2MzIwNjA3MzdDMzVDRkMKUldUOFhNTTNCd1l5bG5SSklSWjV3NkEwcHMxUEN4NFZpUTdJdXVCelFDRWZTbnFTL3J5cDhZL2gK"
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

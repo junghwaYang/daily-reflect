@@ -48,10 +48,20 @@ Daily Reflect는 활동 데이터 수집을 위해 [ActivityWatch](https://activ
 
 | OS | 파일 | 비고 |
 |---|---|---|
-| **macOS** | `Daily_Reflect_x.x.x_universal.dmg` | Intel & Apple Silicon |
+| **macOS** | `Daily_Reflect_x.x.x_universal.dmg` | Intel & Apple Silicon ([설치 안내](#macos-첫-실행)) |
 | **Windows** | `Daily_Reflect_x.x.x_x64-setup.exe` | 설치 파일 (권장) |
 | **Linux** | `Daily_Reflect_x.x.x_amd64.AppImage` | 설치 없이 바로 실행 |
 | **Linux (Debian/Ubuntu)** | `Daily_Reflect_x.x.x_amd64.deb` | `sudo dpkg -i *.deb` |
+
+#### macOS 첫 실행
+
+Daily Reflect는 Apple 공증을 받지 않은 앱이라 macOS Gatekeeper가 첫 실행을 차단할 수 있습니다.
+
+1. **시스템 설정 → 개인 정보 보호 및 보안** 열기
+2. 아래로 스크롤하여 "Daily Reflect" 관련 메시지 확인
+3. **확인 없이 열기** 클릭
+
+또는 앱을 우클릭 → **열기** → 확인 대화상자에서 **열기** 클릭.
 
 #### 소스에서 빌드
 
