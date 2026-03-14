@@ -44,7 +44,14 @@ Daily Reflect requires [ActivityWatch](https://activitywatch.net/) to collect ac
 
 #### Use the Pre-built App (Recommended)
 
-Download the latest release from the [Releases](https://github.com/junghwaYang/daily-reflect/releases) page.
+Download the file for your OS from the [latest release](https://github.com/junghwaYang/daily-reflect/releases/latest):
+
+| OS | File | Notes |
+|---|---|---|
+| **macOS** | `Daily_Reflect_x.x.x_universal.dmg` | Intel & Apple Silicon |
+| **Windows** | `Daily_Reflect_x.x.x_x64-setup.exe` | Installer (recommended) |
+| **Linux** | `Daily_Reflect_x.x.x_amd64.AppImage` | No install needed, just run |
+| **Linux (Debian/Ubuntu)** | `Daily_Reflect_x.x.x_amd64.deb` | `sudo dpkg -i *.deb` |
 
 #### Build from Source
 

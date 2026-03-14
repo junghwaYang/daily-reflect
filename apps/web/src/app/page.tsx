@@ -54,6 +54,28 @@ function IconCheck() {
   );
 }
 
+// ─── Release Fetcher ───
+type DownloadURLs = { macOS?: string; Windows?: string; Linux?: string; version?: string };
+
+function useLatestRelease() {
+  const [downloads, setDownloads] = useState<DownloadURLs>({});
+  useEffect(() => {
+    fetch("https://api.github.com/repos/junghwaYang/daily-reflect/releases/latest")
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data: { tag_name: string; assets: { name: string; browser_download_url: string }[] }) => {
+        const urls: DownloadURLs = { version: data.tag_name };
+        for (const a of data.assets) {
+          if (a.name.endsWith(".dmg")) urls.macOS = a.browser_download_url;
+          else if (a.name.endsWith("-setup.exe")) urls.Windows = a.browser_download_url;
+          else if (a.name.endsWith(".AppImage")) urls.Linux = a.browser_download_url;
+        }
+        setDownloads(urls);
+      })
+      .catch(() => {});
+  }, []);
+  return downloads;
+}
+
 // ─── Main ───
 export default function Home() {
   const [locale, setLocale] = useState<Locale>("ko");
@@ -61,6 +83,7 @@ export default function Home() {
   const [isDark, setIsDark] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const release = useLatestRelease();
 
   const t = translations[locale];
 
@@ -202,9 +225,10 @@ export default function Home() {
 
           {/* CTAs */}
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a href={RELEASES_URL} target="_blank" rel="noopener noreferrer"
+            <a href={release[os as keyof DownloadURLs] as string ?? RELEASES_URL} {...(release[os as keyof DownloadURLs] ? {} : { target: "_blank", rel: "noopener noreferrer" })}
               className="inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-900 px-5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200">
-              {t.hero.cta}
+              {t.download.ctaFor(os)}
+              {release.version && <span className="text-xs opacity-60">{release.version}</span>}
             </a>
             <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer"
               className="inline-flex h-10 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900">
@@ -349,14 +373,46 @@ export default function Home() {
             {t.download.subtitle}
           </p>
 
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a href={RELEASES_URL} target="_blank" rel="noopener noreferrer"
-              className="inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-900 px-5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200">
-              {t.download.ctaFor(os)}
+          {release.version && (
+            <div className="mt-8 grid gap-2 sm:grid-cols-3">
+              {(["macOS", "Windows", "Linux"] as const).map((platform) => {
+                const url = release[platform];
+                const isCurrentOS = os === platform;
+                return (
+                  <a
+                    key={platform}
+                    href={url ?? RELEASES_URL}
+                    {...(url ? {} : { target: "_blank", rel: "noopener noreferrer" })}
+                    className={`inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors ${
+                      isCurrentOS
+                        ? "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                        : "border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                    }`}
+                  >
+                    {platform}
+                    <span className="text-xs opacity-60">{t.download.osLabels[platform]}</span>
+                  </a>
+                );
+              })}
+            </div>
+          )}
+
+          {!release.version && (
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <a href={RELEASES_URL} target="_blank" rel="noopener noreferrer"
+                className="inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-900 px-5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200">
+                {t.download.ctaFor(os)}
+              </a>
+            </div>
+          )}
+
+          <div className="mt-4 flex items-center justify-center">
+            <a href={RELEASES_URL} target="_blank" rel="noopener noreferrer" className="text-xs text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300">
+              {t.download.allDownloads} {release.version && `(${release.version})`} →
             </a>
           </div>
 
-          <div className="mt-6 flex items-center justify-center gap-4 text-xs text-zinc-400 dark:text-zinc-500">
+          <div className="mt-4 flex items-center justify-center gap-4 text-xs text-zinc-400 dark:text-zinc-500">
             <span className="inline-flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               {t.download.openSource}

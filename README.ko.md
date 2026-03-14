@@ -44,7 +44,14 @@ Daily Reflect는 활동 데이터 수집을 위해 [ActivityWatch](https://activ
 
 #### 빌드된 앱 사용 (권장)
 
-[Releases](https://github.com/junghwaYang/daily-reflect/releases) 페이지에서 최신 버전을 다운로드하세요.
+[최신 릴리즈](https://github.com/junghwaYang/daily-reflect/releases/latest)에서 OS에 맞는 파일을 다운로드하세요:
+
+| OS | 파일 | 비고 |
+|---|---|---|
+| **macOS** | `Daily_Reflect_x.x.x_universal.dmg` | Intel & Apple Silicon |
+| **Windows** | `Daily_Reflect_x.x.x_x64-setup.exe` | 설치 파일 (권장) |
+| **Linux** | `Daily_Reflect_x.x.x_amd64.AppImage` | 설치 없이 바로 실행 |
+| **Linux (Debian/Ubuntu)** | `Daily_Reflect_x.x.x_amd64.deb` | `sudo dpkg -i *.deb` |
 
 #### 소스에서 빌드
 

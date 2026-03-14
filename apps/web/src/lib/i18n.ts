@@ -105,6 +105,8 @@ export const translations = {
       ctaFor: (os: string) => `${os}용 다운로드`,
       openSource: "오픈소스",
       mit: "MIT 라이선스",
+      allDownloads: "전체 다운로드",
+      osLabels: { macOS: ".dmg", Windows: ".exe", Linux: ".AppImage" },
       stats: [
         { label: "가격", value: "무료" },
         { label: "라이선스", value: "MIT" },
@@ -226,6 +228,8 @@ export const translations = {
       ctaFor: (os: string) => `Download for ${os}`,
       openSource: "Open Source",
       mit: "MIT License",
+      allDownloads: "All Downloads",
+      osLabels: { macOS: ".dmg", Windows: ".exe", Linux: ".AppImage" },
       stats: [
         { label: "Price", value: "Free" },
         { label: "License", value: "MIT" },
