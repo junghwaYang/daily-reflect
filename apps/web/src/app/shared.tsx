@@ -22,8 +22,31 @@ function useCurrentPath() {
   return path;
 }
 
-function isActive(href: string, currentPath: string): boolean {
-  if (href.includes("#")) return false;
+function useActiveSection(sectionIds: string[]) {
+  const [active, setActive] = useState<string | null>(null);
+  useEffect(() => {
+    const els = sectionIds.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+    if (els.length === 0) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (visible.length > 0) {
+          setActive(visible[0].target.id);
+        }
+      },
+      { rootMargin: "-40% 0px -50% 0px" }
+    );
+    for (const el of els) obs.observe(el);
+    return () => obs.disconnect();
+  }, [sectionIds]);
+  return active;
+}
+
+function isActive(href: string, currentPath: string, activeSection: string | null): boolean {
+  if (href.includes("#")) {
+    if (!activeSection) return false;
+    return href.endsWith(`#${activeSection}`);
+  }
   const normalized = currentPath.replace(/\/$/, "");
   const hrefNormalized = href.replace(/\/$/, "");
   return normalized === hrefNormalized;
@@ -34,11 +57,15 @@ export function SiteHeader({ t, basePath, scrolled, isDark, mobileMenuOpen, togg
   toggleLocale: () => void; toggleDark: () => void; setMobileMenuOpen: Dispatch<SetStateAction<boolean>>;
 }) {
   const currentPath = useCurrentPath();
+  const activeSection = useActiveSection(["how-it-works", "features", "privacy", "download"]);
+
+  const isMainPage = currentPath === "/" || currentPath === basePath || currentPath === `${basePath}/`;
+  const anchor = (hash: string) => isMainPage ? `#${hash}` : `${basePath}/#${hash}`;
 
   const navItems = [
-    { href: `${basePath}/#how-it-works`, label: t.nav.howItWorks },
-    { href: `${basePath}/#features`, label: t.nav.features },
-    { href: `${basePath}/#privacy`, label: t.nav.privacy },
+    { href: anchor("how-it-works"), label: t.nav.howItWorks },
+    { href: anchor("features"), label: t.nav.features },
+    { href: anchor("privacy"), label: t.nav.privacy },
     { href: `${basePath}/guide/`, label: t.nav.guide },
     { href: `${basePath}/changelog/`, label: t.nav.changelog },
   ];
@@ -60,7 +87,7 @@ export function SiteHeader({ t, basePath, scrolled, isDark, mobileMenuOpen, togg
 
         <nav className="hidden items-center gap-1 md:flex">
           {navItems.map(({ href, label }) => {
-            const active = isActive(href, currentPath);
+            const active = isActive(href, currentPath, activeSection);
             return (
               <a key={href} href={href} className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
                 active
@@ -99,7 +126,7 @@ export function SiteHeader({ t, basePath, scrolled, isDark, mobileMenuOpen, togg
         <div className="border-t border-zinc-200 bg-white px-6 py-3 dark:border-zinc-800 dark:bg-zinc-950 md:hidden">
           <nav className="flex flex-col gap-1">
             {navItems.map(({ href, label }) => {
-              const active = isActive(href, currentPath);
+              const active = isActive(href, currentPath, activeSection);
               return (
                 <a key={href} href={href} onClick={() => setMobileMenuOpen(false)} className={`rounded-md px-3 py-2 text-sm ${
                   active
